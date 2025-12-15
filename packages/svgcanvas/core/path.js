@@ -723,8 +723,8 @@ export const convertPath = (pth, toRel) => {
           curx = x
           cury = y
         }
-        d += pathDSegment(letter, [[seg.r1, seg.r2]], [
-          seg.angle,
+        d += pathDSegment(letter, [[seg.r1 || 0, seg.r2 || 0]], [
+          seg.angle || 0,
           (seg.largeArcFlag ? 1 : 0),
           (seg.sweepFlag ? 1 : 0)
         ], [x, y])

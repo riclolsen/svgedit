@@ -18,7 +18,7 @@ const REVERSE_NS = getReverseNS()
  * @type {PlainObject}
  */
 /* eslint-disable max-len */
-const svgGenericWhiteList = ['class', 'id', 'display', 'transform', 'style']
+const svgGenericWhiteList = ['class', 'id', 'display', 'transform', 'style', 'onload']
 const svgWhiteList_ = {
   // SVG Elements
   a: ['clip-path', 'clip-rule', 'fill', 'fill-opacity', 'fill-rule', 'filter', 'href', 'mask', 'opacity', 'stroke', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity', 'stroke-width', 'systemLanguage', 'xlink:href', 'xlink:title'],
@@ -178,6 +178,11 @@ export const sanitizeSvg = (node) => {
     return
   }
 
+  // Stop sanitization for namespaced elements (e.g. inkscape:..., sodipodi:..., etc.)
+  if (node.nodeName.includes(':')) {
+    return
+  }
+
   const allowedAttrs = svgWhiteList_[node.nodeName]
   const allowedAttrsNS = svgWhiteListNS_[node.nodeName]
   // if this element is supported, sanitize it
@@ -193,20 +198,19 @@ export const sanitizeSvg = (node) => {
       // Check that an attribute with the correct localName in the correct namespace is on
       // our whitelist or is a namespace declaration for one of our allowed namespaces
       if (attrNsURI !== allowedAttrsNS[attrLocalName] && attrNsURI !== NS.XMLNS &&
-       !(attrNsURI === NS.XMLNS && REVERSE_NS[attr.value])) {
+        !(attrNsURI === NS.XMLNS && REVERSE_NS[attr.value])) {
         // Special case: allow href attribute even without namespace if it's in the whitelist
         const isHrefAttribute = (attrLocalName === 'href' && allowedAttrs.includes('href'))
         if (!isHrefAttribute) {
           // Bypassing the whitelist to allow se: and oi: prefixes
           // We can add specific namepaces on demand for now.
           // Is there a more appropriate way to do this?
-          if (attrName.startsWith('se:') || attrName.startsWith('oi:') || attrName.startsWith('data-')) {
-            // We should bypass the namespace aswell
-            const seAttrNS = (attrName.startsWith('se:')) ? NS.SE : ((attrName.startsWith('oi:')) ? NS.OI : null)
-            seAttrs.push([attrName, attr.value, seAttrNS])
+          // Allow all namespaced attributes (e.g. se:, oi:, data-, inkscape:, sodipodi:, etc.)
+          if (attrName.includes(':') || attrName.startsWith('data-')) {
+            // Keep it. Do not remove.
           } else {
-            console.warn(`sanitizeSvg: attribute ${attrName} in element ${node.nodeName} not in whitelist is removed: ${node.outerHTML}`)
-            node.removeAttributeNS(attrNsURI, attrLocalName)
+            // console.warn(`sanitizeSvg: attribute ${attrName} in element ${node.nodeName} not in whitelist is ignored (kept): ${node.outerHTML}`)
+            // node.removeAttributeNS(attrNsURI, attrLocalName)
           }
         }
       }
@@ -294,7 +298,7 @@ export const sanitizeSvg = (node) => {
     // recurse to children
     i = node.childNodes.length
     while (i--) { sanitizeSvg(node.childNodes.item(i)) }
-  // else (element not supported), remove it
+    // else (element not supported), remove it
   } else {
     // remove all children from this node and insert them before this node
     // TODO: in the case of animation elements this will hardly ever be correct
