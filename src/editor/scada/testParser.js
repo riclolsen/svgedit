@@ -22,6 +22,11 @@ const test = () => {
     const input4 = '{"attr":"color","list":[{"data":"-99999","param":"-cor-11|","tag":"%n"},{"data":"200","param":"-cor-23|","tag":"%n"}]}, {"align":"Right","attr":"get","tag":"%n","type":"Good"}';
     const res4 = parseXSAC(input4);
     console.log("Test 4 (Complex):", res4.length === 2 ? "PASS" : "FAIL", res4);
+
+    // Case 5: Script Attribute (List)
+    const input5 = '{"attr":"script","list":[{"evt":"onclick","param":"alert(\'hello\');"},{"evt":"onload","param":"init();"}]}';
+    const res5 = parseXSAC(input5);
+    console.log("Test 5 (Script List Multiple):", res5.length === 1 && res5[0].list.length === 2 && res5[0].list[1].evt === "onload" ? "PASS" : "FAIL", res5);
 };
 
 test();

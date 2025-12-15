@@ -144,12 +144,33 @@ export class ScadaUI {
                                     iWrapper.style.marginRight = '5px';
                                     iWrapper.style.flex = '1';
 
-                                    const iInput = document.createElement('input');
-                                    iInput.type = 'text';
-                                    iInput.value = item[ifield.name] || '';
-                                    iInput.placeholder = ifield.label;
-                                    iInput.style.width = '100%';
-                                    iInput.title = ifield.label;
+                                    let iInput;
+                                    if (ifield.type === 'select') {
+                                        iInput = document.createElement('select');
+                                        iInput.style.width = '100%';
+                                        if (ifield.options) {
+                                            ifield.options.forEach(opt => {
+                                                const o = document.createElement('option');
+                                                o.value = opt;
+                                                o.textContent = opt;
+                                                iInput.appendChild(o);
+                                            });
+                                        }
+                                        iInput.value = item[ifield.name] || ifield.default || (ifield.options ? ifield.options[0] : '');
+                                    } else if (ifield.type === 'textarea') {
+                                        iInput = document.createElement('textarea');
+                                        iInput.style.width = '100%';
+                                        iInput.style.minHeight = '40px';
+                                        iInput.style.fontFamily = 'monospace';
+                                        iInput.value = item[ifield.name] || '';
+                                    } else {
+                                        iInput = document.createElement('input');
+                                        iInput.type = 'text';
+                                        iInput.value = item[ifield.name] || '';
+                                    }
+
+                                    iInput.placeholder = ifield.label || '';
+                                    iInput.title = ifield.label || '';
                                     iInput.onchange = (e) => {
                                         item[ifield.name] = e.target.value;
                                         this.save();
@@ -186,6 +207,10 @@ export class ScadaUI {
                             input.appendChild(addBtn);
                         };
                         renderItems();
+                    } else if (field.type === 'textarea') {
+                        input = document.createElement('textarea');
+                        input.style.height = '100px';
+                        input.style.fontFamily = 'monospace';
                     } else {
                         input = document.createElement('input');
                         input.type = field.type === 'number' ? 'number' : 'text';

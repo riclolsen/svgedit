@@ -61,5 +61,16 @@ export const scadaDefinitions = {
             { name: "tag", type: "text", label: "Tag" },
             { name: "src", type: "text", label: "Source Model ID" }
         ]
+    },
+    script: {
+        label: "Script",
+        fields: [
+            {
+                name: "list", type: "list", label: "Scripts", default: [], format: "map", keyField: "evt", itemFields: [
+                    { name: "evt", type: "select", label: "Event", options: ["mousedown", "mouseup", "mouseover", "mouseout", "mousemove", "keydown", "vega", "vega-json", "vega-lite", "exec_once", "exec_on_update"], default: "mousedown" },
+                    { name: "param", type: "textarea", label: "Script Content" }
+                ]
+            }
+        ]
     }
 };
