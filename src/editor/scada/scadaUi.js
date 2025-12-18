@@ -72,11 +72,11 @@ export class ScadaUI {
             label = this.currentElem.getAttributeNS('http://www.inkscape.org/namespaces/inkscape', 'label');
         }
 
-        console.log('SCADA: selected element', this.currentElem);
-        console.log('SCADA: inkscape:label', label);
+        //console.log('SCADA: selected element', this.currentElem);
+        //console.log('SCADA: inkscape:label', label);
 
         this.animations = parseXSAC(label);
-        console.log('SCADA: parsed animations', this.animations);
+        //console.log('SCADA: parsed animations', this.animations);
 
         this.renderForm();
     }
