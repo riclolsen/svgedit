@@ -25,7 +25,7 @@ export class Selector {
   * @param {Element} elem - DOM element associated with this selector
   * @param {module:utilities.BBoxObject} [bbox] - Optional bbox to use for initialization (prevents duplicate `getBBox` call).
   */
-  constructor (id, elem, bbox) {
+  constructor(id, elem, bbox) {
     // this is the selector's unique number
     this.id = id
 
@@ -77,7 +77,7 @@ export class Selector {
   * @param {module:utilities.BBoxObject} bbox - Optional bbox to use for reset (prevents duplicate getBBox call).
   * @returns {void}
   */
-  reset (e, bbox) {
+  reset(e, bbox) {
     this.locked = true
     this.selectedElement = e
     this.resize(bbox)
@@ -89,7 +89,7 @@ export class Selector {
   * @param {boolean} show - Indicates whether grips should be shown or not
   * @returns {void}
   */
-  showGrips (show) {
+  showGrips(show) {
     const bShow = show ? 'inline' : 'none'
     selectorManager_.selectorGripsGroup.setAttribute('display', bShow)
     const elem = this.selectedElement
@@ -105,7 +105,7 @@ export class Selector {
   * @param {module:utilities.BBoxObject} [bbox] - BBox to use for resize (prevents duplicate getBBox call).
   * @returns {void}
   */
-  resize (bbox) {
+  resize(bbox) {
     const dataStorage = svgCanvas.getDataStorage()
     const selectedBox = this.selectorRect
     const mgr = selectorManager_
@@ -130,7 +130,7 @@ export class Selector {
     while (currentElt.parentNode) {
       if (currentElt.parentNode && currentElt.parentNode.tagName === 'g' && currentElt.parentNode.transform) {
         if (currentElt.parentNode.transform.baseVal.numberOfItems) {
-          parentTransformationMatrix = matrixMultiply(transformListToTransform(getTransformList(selected.parentNode)).matrix, parentTransformationMatrix)
+          parentTransformationMatrix = matrixMultiply(transformListToTransform(getTransformList(currentElt.parentNode)).matrix, parentTransformationMatrix)
         }
       }
       currentElt = currentElt.parentNode
@@ -256,7 +256,7 @@ export class Selector {
   * @param {Float} angle - Current rotation angle in degrees
   * @returns {void}
   */
-  static updateGripCursors (angle) {
+  static updateGripCursors(angle) {
     const dirArr = Object.keys(selectorManager_.selectorGrips)
     let steps = Math.round(angle / 45)
     if (steps < 0) { steps += 8 }
@@ -277,7 +277,7 @@ export class SelectorManager {
   /**
    * Sets up properties and calls `initGroup`.
    */
-  constructor () {
+  constructor() {
     // this will hold the <g> element that contains all selector rects/grips
     this.selectorParentGroup = null
 
@@ -313,7 +313,7 @@ export class SelectorManager {
   * Resets the parent selector group element.
   * @returns {void}
   */
-  initGroup () {
+  initGroup() {
     const dataStorage = svgCanvas.getDataStorage()
     // remove old selector parent group if it existed
     if (this.selectorParentGroup?.parentNode) {
@@ -426,7 +426,7 @@ export class SelectorManager {
   * @param {module:utilities.BBoxObject} [bbox] - Optional bbox to use for reset (prevents duplicate getBBox call).
   * @returns {Selector} The selector based on the given element
   */
-  requestSelector (elem, bbox) {
+  requestSelector(elem, bbox) {
     if (!elem) { return null }
 
     const N = this.selectors.length
@@ -456,7 +456,7 @@ export class SelectorManager {
   * @param {Element} elem - DOM element to remove the selector for
   * @returns {void}
   */
-  releaseSelector (elem) {
+  releaseSelector(elem) {
     if (!elem) { return }
     const N = this.selectors.length
     const sel = this.selectorMap[elem.id]
@@ -485,7 +485,7 @@ export class SelectorManager {
   * @returns {SVGRectElement} The rubberBandBox DOM element. This is the rectangle drawn by
   * the user for selecting/zooming
   */
-  getRubberBandBox () {
+  getRubberBandBox() {
     if (!this.rubberBandBox) {
       this.rubberBandBox =
         svgCanvas.createSVGElement({
