@@ -70,7 +70,7 @@ export const init = canvas => {
  */
 const svgCanvasToString = () => {
   // keep calling it until there are none to remove
-  while (svgCanvas.removeUnusedDefElems() > 0) {} // eslint-disable-line no-empty
+  while (svgCanvas.removeUnusedDefElems() > 0) { } // eslint-disable-line no-empty
 
   svgCanvas.pathActions.clear(true)
 
@@ -310,7 +310,7 @@ const svgToString = (elem, indent) => {
 
     if (elem.hasChildNodes()) {
       out.push('>')
-      indent++
+      indent += 2
       let bOneLine = false
 
       for (let i = 0; i < childs.length; i++) {
@@ -345,7 +345,7 @@ const svgToString = (elem, indent) => {
             break
         } // switch on node type
       }
-      indent--
+      indent -= 2
       if (!bOneLine) {
         out.push('\n')
         for (let i = 0; i < indent; i++) {
@@ -716,10 +716,10 @@ const importSvgString = (xmlString, preserveDimension) => {
     useEl = svgCanvas.getDOMDocument().createElementNS(NS.SVG, 'use')
     useEl.id = svgCanvas.getNextId()
     svgCanvas.setHref(useEl, '#' + symbol.id)
-    ;(
-      svgCanvas.getCurrentGroup() ||
-      svgCanvas.getCurrentDrawing().getCurrentLayer()
-    ).append(useEl)
+      ; (
+        svgCanvas.getCurrentGroup() ||
+        svgCanvas.getCurrentDrawing().getCurrentLayer()
+      ).append(useEl)
     batchCmd.addSubCommand(new InsertElementCommand(useEl))
     svgCanvas.clearSelection()
 
@@ -1253,14 +1253,14 @@ const convertGradientsMethod = elem => {
             (tmpFillStrokeElems[0].tagName === 'linearGradient' ||
               tmpFillStrokeElems[0].tagName === 'radialGradient') &&
             tmpFillStrokeElems[0].getAttribute('gradientUnits') ===
-              'userSpaceOnUse'
+            'userSpaceOnUse'
           ) {
             fillStrokeElems = svgContent.querySelectorAll(
               '[fill="url(#' +
-                tmpFillStrokeElems[0].id +
-                ')"],[stroke="url(#' +
-                tmpFillStrokeElems[0].id +
-                ')"]'
+              tmpFillStrokeElems[0].id +
+              ')"],[stroke="url(#' +
+              tmpFillStrokeElems[0].id +
+              ')"]'
             )
           } else {
             return

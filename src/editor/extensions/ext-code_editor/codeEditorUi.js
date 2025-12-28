@@ -14,30 +14,37 @@ export class CodeEditorUI {
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
-            width: 600px;
-            height: 500px;
-            background: #ffffff;
-            border: 1px solid #ccc;
+            width: 700px;
+            height: 600px;
+            background: #252526;
+            border: 1px solid #444;
             padding: 0;
             z-index: 6000;
             display: none;
             flex-direction: column;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
+            color: #ccc;
         `;
 
         div.innerHTML = `
-            <div style="background: #f8f9fa; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; cursor: move;" id="code_editor_header">
-                <strong style="color: #333;">Edit SVG Code</strong>
-                <button id="code_editor_close" style="background:none; border:none; font-size: 20px; cursor:pointer; color: #888;">&times;</button>
+            <div style="background: #323233; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; cursor: move; user-select: none;" id="code_editor_header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
+                    <strong style="color: #eee; font-size: 14px;">Source Editor</strong>
+                </div>
+                <button id="code_editor_close" style="background:none; border:none; font-size: 24px; cursor:pointer; color: #aaa; line-height: 1;">&times;</button>
             </div>
-            <div style="flex: 1; padding: 15px; display: flex; flex-direction: column;">
-                <textarea id="code_editor_textarea" spellcheck="false" style="flex: 1; width: 100%; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 14px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; resize: none; background: #fafafa; color: #222;"></textarea>
-                <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
-                    <button id="code_editor_cancel" style="padding: 8px 16px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer;">Cancel</button>
-                    <button id="code_editor_apply" style="padding: 8px 16px; border: none; background: #007bff; color: white; border-radius: 4px; cursor: pointer;">Apply Changes</button>
+            <div style="flex: 1; padding: 0; display: flex; flex-direction: column; background: #1e1e1e;">
+                <textarea id="code_editor_textarea" spellcheck="false" style="flex: 1; width: 100%; font-family: 'Cascadia Code', 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 13px; line-height: 1.6; padding: 20px; border: none; outline: none; background: #1e1e1e; color: #d4d4d4; resize: none;"></textarea>
+                <div style="padding: 15px 20px; background: #252526; border-top: 1px solid #444; display: flex; justify-content: space-between; align-items: center;">
+                    <span id="code_editor_status" style="font-size: 12px; color: #888;">Editing element</span>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="code_editor_cancel" style="padding: 8px 20px; border: 1px solid #444; background: #333; color: #eee; border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s;">Cancel</button>
+                        <button id="code_editor_apply" style="padding: 8px 20px; border: none; background: #007acc; color: white; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;">Apply Changes</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -102,8 +109,10 @@ export class CodeEditorUI {
         }
 
         this.currentElem = selected[0];
+        const canvas = this.editor.svgCanvas;
         const textarea = this.container.querySelector('#code_editor_textarea');
-        textarea.value = this.currentElem.outerHTML;
+        textarea.value = canvas.svgToString(this.currentElem, 0);
+        this.container.querySelector('#code_editor_status').textContent = `Editing <${this.currentElem.tagName.toLowerCase()}> element`;
         this.container.querySelector('#code_editor_apply').disabled = false;
     }
 
