@@ -353,7 +353,38 @@ export class ScadaUI {
 
         addBtn.onclick = () => {
             if (typeSelect.value) {
-                this.animations.push({ attr: typeSelect.value });
+                const newAttr = typeSelect.value;
+                const newAnim = { attr: newAttr };
+
+                // "Repeat the value of the last entered attribute"
+                // If there is at least one existing animation, try to carry over values
+                if (this.animations.length > 0) {
+                    const lastAnim = this.animations[this.animations.length - 1];
+                    const def = scadaDefinitions[newAttr];
+
+                    if (def && def.fields) {
+                        def.fields.forEach(field => {
+                            // If the last animation defines this field, copy it
+                            if (lastAnim[field.name] !== undefined) {
+                                // Avoid copying incompatible lists across different types (e.g. don't copy Color rules to Script list)
+                                // Only copy lists if we are adding the same type of animation, or if we explicitly decide it's safe (which it usually isn't for lists)
+                                if (field.type === 'list' && lastAnim.attr !== newAttr) {
+                                    return;
+                                }
+
+                                let val = lastAnim[field.name];
+                                // Deep copy objects/arrays
+                                if (typeof val === 'object' && val !== null) {
+                                    newAnim[field.name] = JSON.parse(JSON.stringify(val));
+                                } else {
+                                    newAnim[field.name] = val;
+                                }
+                            }
+                        });
+                    }
+                }
+
+                this.animations.push(newAnim);
                 this.save();
                 this.renderForm();
             }
