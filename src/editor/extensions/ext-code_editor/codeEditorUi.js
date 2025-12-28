@@ -60,6 +60,12 @@ export class CodeEditorUI {
         cancelBtn.onclick = () => this.hide();
         applyBtn.onclick = () => this.apply();
 
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.container.style.display === 'flex') {
+                this.hide();
+            }
+        });
+
         this.makeDraggable(div, div.querySelector('#code_editor_header'));
     }
 
