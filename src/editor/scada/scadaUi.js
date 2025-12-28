@@ -18,25 +18,53 @@ export class ScadaUI {
         position: absolute;
         right: 10px;
         top: 60px;
-        width: 300px;
-        background: #f0f0f0;
-        border: 1px solid #999;
-        padding: 10px;
+        width: 360px;
+        background: #f8f8f8;
+        border: 1px solid #aaa;
+        padding: 12px;
         z-index: 5000;
         display: none;
-        max-height: 80vh;
+        max-height: 85vh;
         overflow-y: auto;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        font-family: sans-serif;
+        overflow-x: hidden;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        border-radius: 8px;
     `;
 
+        const style = document.createElement('style');
+        style.innerHTML = `
+            #scada_panel input, #scada_panel select, #scada_panel textarea {
+                box-sizing: border-box !important;
+                width: 100% !important;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 6px;
+                font-size: 13px;
+            }
+            #scada_panel button {
+                cursor: pointer;
+                border-radius: 4px;
+                transition: background 0.2s;
+            }
+            #scada_panel .scada-row {
+                margin-bottom: 12px;
+            }
+            #scada_panel label {
+                margin-bottom: 4px;
+                color: #555;
+                font-weight: 600;
+            }
+        `;
+        document.head.appendChild(style);
+
         div.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:10px; border-bottom:1px solid #ccc; padding-bottom:5px;">
+        <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:15px; border-bottom:1px solid #ddd; padding-bottom:10px;">
             <div style="display: flex; flex-direction: column;">
-                <strong style="font-size: 1.1em;">SCADA Animations</strong>
-                <small id="scada_element_id" style="color: #666; font-family: monospace; margin-top: 2px;"></small>
+                <strong style="font-size: 1.2em; color: #333;">SCADA Animations</strong>
+                <small id="scada_element_id" style="color: #888; font-family: 'Consolas', monospace; margin-top: 2px; font-size: 0.85em;"></small>
             </div>
-            <button id="scada_close" style="background:none;border:none;cursor:pointer; font-weight: bold; padding: 5px;">X</button>
+            <button id="scada_close" style="background:none; border:none; cursor:pointer; font-size: 20px; color: #999;">&times;</button>
         </div>
         <div id="scada_content"></div>
     `;
@@ -171,11 +199,13 @@ export class ScadaUI {
                                     const iWrapper = document.createElement('div');
                                     iWrapper.style.marginRight = '5px';
                                     iWrapper.style.flex = '1';
+                                    iWrapper.style.minWidth = '0'; // Allow shrinking
 
                                     let iInput;
                                     if (ifield.type === 'select') {
                                         iInput = document.createElement('select');
                                         iInput.style.width = '100%';
+                                        iInput.style.boxSizing = 'border-box';
                                         if (ifield.options) {
                                             ifield.options.forEach(opt => {
                                                 const o = document.createElement('option');
@@ -195,6 +225,8 @@ export class ScadaUI {
                                         iInput = document.createElement('input');
                                         iInput.type = 'text';
                                         iInput.value = tempObj[ifield.name] || '';
+                                        iInput.style.width = '100%';
+                                        iInput.style.boxSizing = 'border-box';
                                     }
 
                                     iInput.placeholder = ifield.label || '';
@@ -282,8 +314,11 @@ export class ScadaUI {
 
         // Add New Button
         const addWrapper = document.createElement('div');
-        addWrapper.style.marginTop = '10px';
+        addWrapper.style.display = 'flex';
+        addWrapper.style.gap = '8px';
         const typeSelect = document.createElement('select');
+        typeSelect.style.flex = '1';
+        typeSelect.style.minWidth = '0';
 
         const existingAttrs = new Set(this.animations.map(a => a.attr));
         let hasOptions = false;
@@ -300,11 +335,20 @@ export class ScadaUI {
 
         const addBtn = document.createElement('button');
         addBtn.textContent = 'Add Animation';
+        addBtn.style.whiteSpace = 'nowrap';
+        addBtn.style.padding = '8px 12px';
+        addBtn.style.background = '#e1f5fe';
+        addBtn.style.border = '1px solid #03a9f4';
+        addBtn.style.color = '#01579b';
+        addBtn.style.fontWeight = '600';
 
         if (!hasOptions) {
             typeSelect.style.display = 'none';
             addBtn.disabled = true;
-            addBtn.textContent = 'No more animations available';
+            addBtn.textContent = 'Done (All Added)';
+            addBtn.style.background = '#eee';
+            addBtn.style.border = '1px solid #ccc';
+            addBtn.style.color = '#888';
         }
 
         addBtn.onclick = () => {
