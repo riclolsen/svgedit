@@ -274,7 +274,29 @@ export class ScadaUI {
                                 } else {
                                     const newItem = {};
                                     // Initialize with empty strings
-                                    field.itemFields.forEach(f => newItem[f.name] = '');
+                                    field.itemFields.forEach(f => {
+                                        newItem[f.name] = '';
+                                        // "Repeat the last value of tag field previously entered"
+                                        if (f.name === 'tag' && items.length > 0) {
+                                            const lastItem = items[items.length - 1];
+                                            let lastTagVal = '';
+
+                                            // Handle string format (separator) vs object format
+                                            if (typeof lastItem === 'string') {
+                                                // If previous item was string, parse it to find tag
+                                                // We can't easily parse generic separator strings without knowing the position of 'tag', 
+                                                // but for object-based items (which is what we are pushing now), this block shouldn't be hit often 
+                                                // unless we are mixing formats.
+                                                // For robustness, let's assume we are mostly dealing with objects in 'anim[field.name]' 
+                                                // OR we blindly try to match if we can.
+                                            } else {
+                                                // Object format
+                                                lastTagVal = lastItem.tag || '';
+                                            }
+
+                                            if (lastTagVal) newItem[f.name] = lastTagVal;
+                                        }
+                                    });
                                     anim[field.name].push(newItem);
                                 }
                                 this.save();

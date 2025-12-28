@@ -17,13 +17,12 @@ export const scadaDefinitions = {
     color: {
         label: "Color",
         fields: [
-            { name: "tag", type: "text", label: "Tag", default: "%n" },
             // List is special, handled by a sub-editor
             {
                 name: "list", type: "list", label: "Rules", default: [], itemFields: [
-                    { name: "data", type: "text", label: "Value" },
+                    { name: "tag", type: "text", label: "Tag" },
+                    { name: "data", type: "text", label: "Limit" },
                     { name: "param", type: "text", label: "Color/Style" },
-                    { name: "tag", type: "text", label: "Tag override" } // optional
                 ]
             }
         ]
