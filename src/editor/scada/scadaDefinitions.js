@@ -58,8 +58,16 @@ export const scadaDefinitions = {
     clone: {
         label: "Clone",
         fields: [
-            { name: "tag", type: "text", label: "Tag" },
-            { name: "src", type: "text", label: "Source Model ID" }
+            {
+                name: "map",
+                type: "list",
+                label: "Variables",
+                separator: "=",
+                itemFields: [
+                    { name: "var", label: "Variable", type: "text" },
+                    { name: "val", label: "Value", type: "text" }
+                ]
+            }
         ]
     },
     script: {

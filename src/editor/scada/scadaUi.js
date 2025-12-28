@@ -146,6 +146,26 @@ export class ScadaUI {
                                 itemRow.style.borderBottom = '1px dashed #eee';
                                 itemRow.style.paddingBottom = '4px';
 
+                                // Prepare temporary object for editing
+                                let tempObj = {};
+                                if (typeof item === 'string' && field.separator) {
+                                    if (field.separator === '=') {
+                                        const eqIdx = item.indexOf('=');
+                                        if (eqIdx !== -1) {
+                                            tempObj[field.itemFields[0].name] = item.substring(0, eqIdx);
+                                            tempObj[field.itemFields[1].name] = item.substring(eqIdx + 1);
+                                        } else {
+                                            tempObj[field.itemFields[0].name] = item;
+                                            tempObj[field.itemFields[1].name] = '';
+                                        }
+                                    } else {
+                                        const parts = item.split(field.separator);
+                                        field.itemFields.forEach((f, i) => tempObj[f.name] = parts[i] || '');
+                                    }
+                                } else {
+                                    tempObj = item;
+                                }
+
                                 field.itemFields.forEach(ifield => {
                                     const iWrapper = document.createElement('div');
                                     iWrapper.style.marginRight = '5px';
@@ -163,23 +183,34 @@ export class ScadaUI {
                                                 iInput.appendChild(o);
                                             });
                                         }
-                                        iInput.value = item[ifield.name] || ifield.default || (ifield.options ? ifield.options[0] : '');
+                                        iInput.value = tempObj[ifield.name] || ifield.default || (ifield.options ? ifield.options[0] : '');
                                     } else if (ifield.type === 'textarea') {
                                         iInput = document.createElement('textarea');
                                         iInput.style.width = '100%';
                                         iInput.style.minHeight = '40px';
                                         iInput.style.fontFamily = 'monospace';
-                                        iInput.value = item[ifield.name] || '';
+                                        iInput.value = tempObj[ifield.name] || '';
                                     } else {
                                         iInput = document.createElement('input');
                                         iInput.type = 'text';
-                                        iInput.value = item[ifield.name] || '';
+                                        iInput.value = tempObj[ifield.name] || '';
                                     }
 
                                     iInput.placeholder = ifield.label || '';
                                     iInput.title = ifield.label || '';
                                     iInput.onchange = (e) => {
-                                        item[ifield.name] = e.target.value;
+                                        tempObj[ifield.name] = e.target.value;
+
+                                        if (field.separator) {
+                                            // Reconstruct string
+                                            let str = '';
+                                            if (field.separator === '=') {
+                                                str = `${tempObj[field.itemFields[0].name]}=${tempObj[field.itemFields[1].name]}`;
+                                            } else {
+                                                str = field.itemFields.map(f => tempObj[f.name]).join(field.separator);
+                                            }
+                                            items[idx] = str;
+                                        }
                                         this.save();
                                     };
                                     iWrapper.appendChild(iInput);
@@ -204,10 +235,15 @@ export class ScadaUI {
                             addBtn.style.fontSize = '0.8em';
                             addBtn.onclick = () => {
                                 if (!anim[field.name]) anim[field.name] = [];
-                                const newItem = {};
-                                // Initialize with empty strings
-                                field.itemFields.forEach(f => newItem[f.name] = '');
-                                anim[field.name].push(newItem);
+
+                                if (field.separator) {
+                                    items.push(field.separator);
+                                } else {
+                                    const newItem = {};
+                                    // Initialize with empty strings
+                                    field.itemFields.forEach(f => newItem[f.name] = '');
+                                    anim[field.name].push(newItem);
+                                }
                                 this.save();
                                 renderItems();
                             };
@@ -247,18 +283,35 @@ export class ScadaUI {
         const addWrapper = document.createElement('div');
         addWrapper.style.marginTop = '10px';
         const typeSelect = document.createElement('select');
+
+        const existingAttrs = new Set(this.animations.map(a => a.attr));
+        let hasOptions = false;
+
         Object.keys(scadaDefinitions).forEach(k => {
-            const opt = document.createElement('option');
-            opt.value = k;
-            opt.textContent = scadaDefinitions[k].label;
-            typeSelect.appendChild(opt);
+            if (!existingAttrs.has(k)) {
+                const opt = document.createElement('option');
+                opt.value = k;
+                opt.textContent = scadaDefinitions[k].label;
+                typeSelect.appendChild(opt);
+                hasOptions = true;
+            }
         });
+
         const addBtn = document.createElement('button');
         addBtn.textContent = 'Add Animation';
+
+        if (!hasOptions) {
+            typeSelect.style.display = 'none';
+            addBtn.disabled = true;
+            addBtn.textContent = 'No more animations available';
+        }
+
         addBtn.onclick = () => {
-            this.animations.push({ attr: typeSelect.value });
-            this.save();
-            this.renderForm();
+            if (typeSelect.value) {
+                this.animations.push({ attr: typeSelect.value });
+                this.save();
+                this.renderForm();
+            }
         };
 
         addWrapper.appendChild(typeSelect);
