@@ -979,7 +979,8 @@ const mouseDownEvent = (evt) => {
     svgCanvas.cloneSelectedElements(0, 0)
   }
 
-  svgCanvas.setRootSctm($id('svgcontent').querySelector('g').getScreenCTM().inverse())
+  const container = svgCanvas.getCurrentGroup() || svgCanvas.getCurrentDrawing().getCurrentLayer();
+  svgCanvas.setRootSctm(container.getScreenCTM().inverse());
 
   const pt = transformPoint(evt.clientX, evt.clientY, svgCanvas.getrootSctm())
   const mouseX = pt.x * zoom

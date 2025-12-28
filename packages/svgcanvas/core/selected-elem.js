@@ -211,11 +211,24 @@ const moveSelectedElements = (dx, dy, undoable = true) => {
       const xform = svgCanvas.getSvgRoot().createSVGTransform()
       const tlist = getTransformList(selected)
 
+      let dxLocal = Array.isArray(dx) ? dx[i] : dx;
+      let dyLocal = Array.isArray(dx) ? dy[i] : dy;
+
+      // Adjust for parent transformation
+      const parent = selected.parentNode;
+      if (parent && parent.tagName === 'g' && parent.getCTM) {
+        const iM = parent.getCTM().inverse();
+        const dxP = dxLocal * iM.a + dyLocal * iM.c;
+        const dyP = dxLocal * iM.b + dyLocal * iM.d;
+        dxLocal = dxP;
+        dyLocal = dyP;
+      }
+
       // dx and dy could be arrays
       if (Array.isArray(dx)) {
-        xform.setTranslate(dx[i], dy[i])
+        xform.setTranslate(dxLocal, dyLocal)
       } else {
-        xform.setTranslate(dx, dy)
+        xform.setTranslate(dxLocal, dyLocal)
       }
 
       if (tlist.numberOfItems) {
@@ -297,7 +310,7 @@ const cloneSelectedElements = (x, y) => {
   while (i--) {
     // clone each element and replace it within copiedElements
     elem = copiedElements[i] = drawing.copyElem(copiedElements[i])
-    ;(currentGroup || drawing.getCurrentLayer()).append(elem)
+      ; (currentGroup || drawing.getCurrentLayer()).append(elem)
     batchCmd.addSubCommand(new InsertElementCommand(elem))
   }
 
