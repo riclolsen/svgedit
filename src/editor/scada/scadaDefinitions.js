@@ -22,7 +22,7 @@ export const scadaDefinitions = {
                 name: "list", type: "list", label: "Rules", default: [], itemFields: [
                     { name: "tag", type: "text", label: "Tag" },
                     { name: "data", type: "text", label: "Limit" },
-                    { name: "param", type: "text", label: "Color/Style" },
+                    { name: "param", type: "color", label: "Color Name/Code" },
                 ]
             }
         ]

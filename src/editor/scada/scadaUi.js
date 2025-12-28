@@ -221,6 +221,103 @@ export class ScadaUI {
                                         iInput.style.minHeight = '40px';
                                         iInput.style.fontFamily = 'monospace';
                                         iInput.value = tempObj[ifield.name] || '';
+                                    } else if (ifield.type === 'color') {
+                                        iInput = document.createElement('div');
+                                        iInput.style.display = 'flex';
+                                        iInput.style.gap = '2px';
+                                        iInput.style.width = '100%';
+
+                                        const txt = document.createElement('input');
+                                        txt.type = 'text';
+                                        txt.value = tempObj[ifield.name] || '';
+                                        txt.style.flex = '1';
+                                        txt.style.minWidth = '0';
+                                        txt.style.boxSizing = 'border-box';
+                                        // Override global CSS that forces width: 100%
+                                        txt.style.setProperty('width', 'auto', 'important');
+
+                                        const pickerWrapper = document.createElement('div');
+                                        pickerWrapper.style.position = 'relative';
+                                        pickerWrapper.style.width = '24px';
+                                        pickerWrapper.style.height = '24px';
+                                        pickerWrapper.style.flexShrink = '0';
+                                        pickerWrapper.style.display = 'flex';
+                                        pickerWrapper.style.alignItems = 'center';
+                                        pickerWrapper.style.justifyContent = 'center';
+
+                                        const picker = document.createElement('input');
+                                        picker.type = 'color';
+                                        picker.style.position = 'absolute';
+                                        picker.style.top = '0';
+                                        picker.style.left = '0';
+                                        picker.style.width = '100%';
+                                        picker.style.height = '100%';
+                                        picker.style.opacity = '0';
+                                        picker.style.cursor = 'pointer';
+                                        picker.style.setProperty('padding', '0', 'important');
+                                        picker.style.setProperty('width', '100%', 'important');
+                                        picker.style.setProperty('border', 'none', 'important');
+
+                                        const paletteIcon = document.createElement('div');
+                                        paletteIcon.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.92 0 1.76-.74 1.76-1.67 0-.44-.19-.85-.49-1.16-.3-.3-.48-.72-.48-1.17 0-.93.75-1.68 1.68-1.68h2.06c4.68 0 8.47-3.79 8.47-8.47C25 5.99 19.17 2 12 2z"/></svg>`;
+                                        paletteIcon.style.color = '#555';
+                                        paletteIcon.style.pointerEvents = 'none';
+
+                                        pickerWrapper.appendChild(paletteIcon);
+                                        pickerWrapper.appendChild(picker);
+
+                                        // Try to sync picker with text if it's a valid hex
+                                        if (txt.value.match(/^#[0-9A-Fa-f]{6}$/)) {
+                                            picker.value = txt.value;
+                                        }
+
+                                        picker.oninput = (e) => {
+                                            txt.value = e.target.value;
+                                            // Trigger change manually
+                                            txt.dispatchEvent(new Event('change'));
+                                        };
+
+                                        txt.onchange = (e) => {
+                                            tempObj[ifield.name] = e.target.value;
+                                            // Update picker if valid hex
+                                            if (e.target.value.match(/^#[0-9A-Fa-f]{6}$/)) {
+                                                picker.value = e.target.value;
+                                            }
+                                            // Save Logic (duplicated from default input change)
+                                            if (field.separator) {
+                                                let str = '';
+                                                if (field.separator === '=') {
+                                                    str = `${tempObj[field.itemFields[0].name]}=${tempObj[field.itemFields[1].name]}`;
+                                                } else {
+                                                    str = field.itemFields.map(f => tempObj[f.name]).join(field.separator);
+                                                }
+                                                items[idx] = str;
+                                            }
+                                            this.save();
+                                        };
+
+                                        iInput.appendChild(txt);
+                                        iInput.appendChild(pickerWrapper);
+
+                                        // We need to return the container, but the loop expects 'iInput' to have .value or similar for shared logic?
+                                        // Actually the shared logic below 'iInput.placeholder...' assumes simple input.
+                                        // We should probably bypass the shared logic for this composite type or adapt it.
+                                        // The current code structure appends iInput at the end of loop.
+                                        // We will add the placeholder to 'txt' here.
+                                        txt.placeholder = ifield.label || '';
+                                        txt.title = ifield.label || '';
+
+                                        // The 'onchange' handler below (lines 234+) overwrites onchange. 
+                                        // We defined txt.onchange above, but 'iInput' is the DIV. 
+                                        // The code below adds 'onchange' to iInput. 
+                                        // We must prevent that or ensure it works. 
+                                        // The loop continues...
+                                        // To avoid the code below breaking or overwriting, we can use a flag or restructure.
+                                        // Simpler: Let's assign the text input as 'iInput' for the sake of the shared logic below, 
+                                        // but we need to append the picker somehow. 
+                                        // ACTUALLY, the logic below (lines 234-248) attaches onchange to iInput.
+                                        // If iInput is a div, onchange won't fire/bubble correctly from children unless we handle it.
+                                        // Let's rely on our custom logic above and ensure the code below doesn't mess it up.
                                     } else {
                                         iInput = document.createElement('input');
                                         iInput.type = 'text';
@@ -229,23 +326,25 @@ export class ScadaUI {
                                         iInput.style.boxSizing = 'border-box';
                                     }
 
-                                    iInput.placeholder = ifield.label || '';
-                                    iInput.title = ifield.label || '';
-                                    iInput.onchange = (e) => {
-                                        tempObj[ifield.name] = e.target.value;
+                                    if (ifield.type !== 'color') {
+                                        iInput.placeholder = ifield.label || '';
+                                        iInput.title = ifield.label || '';
+                                        iInput.onchange = (e) => {
+                                            tempObj[ifield.name] = e.target.value;
 
-                                        if (field.separator) {
-                                            // Reconstruct string
-                                            let str = '';
-                                            if (field.separator === '=') {
-                                                str = `${tempObj[field.itemFields[0].name]}=${tempObj[field.itemFields[1].name]}`;
-                                            } else {
-                                                str = field.itemFields.map(f => tempObj[f.name]).join(field.separator);
+                                            if (field.separator) {
+                                                // Reconstruct string
+                                                let str = '';
+                                                if (field.separator === '=') {
+                                                    str = `${tempObj[field.itemFields[0].name]}=${tempObj[field.itemFields[1].name]}`;
+                                                } else {
+                                                    str = field.itemFields.map(f => tempObj[f.name]).join(field.separator);
+                                                }
+                                                items[idx] = str;
                                             }
-                                            items[idx] = str;
-                                        }
-                                        this.save();
-                                    };
+                                            this.save();
+                                        };
+                                    }
                                     iWrapper.appendChild(iInput);
                                     itemRow.appendChild(iWrapper);
                                 });
