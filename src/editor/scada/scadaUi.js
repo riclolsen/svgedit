@@ -293,7 +293,7 @@ export class ScadaUI {
                     }
 
                     if (field.type !== 'list') {
-                        input.value = anim[field.name] || field.default || '';
+                        input.value = anim[field.name] ?? field.default ?? '';
                         input.style.width = '100%';
                         input.onchange = (e) => {
                             anim[field.name] = e.target.value;
