@@ -117,7 +117,8 @@ export class ScadaUI {
                     const row = document.createElement('div');
                     row.style.marginTop = '4px';
                     const label = document.createElement('label');
-                    label.textContent = field.label + ': ';
+                    const labelStr = field.label || (field.name ? field.name.charAt(0).toUpperCase() + field.name.slice(1) : 'Unknown');
+                    label.textContent = labelStr + ': ';
                     label.style.display = 'block';
                     label.style.fontSize = '0.8em';
 

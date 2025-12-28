@@ -9,8 +9,8 @@ export const scadaDefinitions = {
         label: "Get (Text)",
         fields: [
             { name: "tag", type: "text", label: "Tag", default: "" },
-            { name: "align", type: "select", options: ["Left", "Center", "Right"], default: "Left" },
-            { name: "type", type: "select", options: ["Data", "Good", "Bad"], default: "Data" }, // 'type' usage inferred from example
+            { name: "align", type: "select", label: "Align", options: ["Left", "Center", "Right"], default: "Left" },
+            { name: "type", type: "select", label: "Type", options: ["Data", "Good", "Bad"], default: "Data" }, // 'type' usage inferred from example
             // format is often embedded in the text content itself for 'get' (printf) or 'boolean' conventions
         ]
     },
@@ -42,7 +42,7 @@ export const scadaDefinitions = {
             { name: "tag", type: "text", label: "Tag" },
             { name: "min", type: "number", label: "Min" },
             { name: "max", type: "number", label: "Max" },
-            { name: "direction", type: "select", options: ["Up", "Down", "Left", "Right"], default: "Up" }
+            { name: "direction", type: "select", label: "Direction", options: ["Up", "Down", "Left", "Right"], default: "Up" }
         ]
     },
     popup: {
