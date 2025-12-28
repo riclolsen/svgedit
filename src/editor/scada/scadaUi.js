@@ -31,9 +31,12 @@ export class ScadaUI {
     `;
 
         div.innerHTML = `
-        <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #ccc; padding-bottom:5px;">
-            <strong>SCADA Animations</strong>
-            <button id="scada_close" style="background:none;border:none;cursor:pointer;">X</button>
+        <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:10px; border-bottom:1px solid #ccc; padding-bottom:5px;">
+            <div style="display: flex; flex-direction: column;">
+                <strong style="font-size: 1.1em;">SCADA Animations</strong>
+                <small id="scada_element_id" style="color: #666; font-family: monospace; margin-top: 2px;"></small>
+            </div>
+            <button id="scada_close" style="background:none;border:none;cursor:pointer; font-weight: bold; padding: 5px;">X</button>
         </div>
         <div id="scada_content"></div>
     `;
@@ -82,11 +85,15 @@ export class ScadaUI {
     }
 
     renderEmpty() {
+        const idSpan = this.container.querySelector('#scada_element_id');
+        if (idSpan) idSpan.textContent = '';
         const content = this.container.querySelector('#scada_content');
-        content.innerHTML = '<p>Please select exactly one element.</p>';
+        content.innerHTML = '<p style="color: #888; text-align: center; margin-top: 20px;">Please select exactly one element.</p>';
     }
 
     renderForm() {
+        const idSpan = this.container.querySelector('#scada_element_id');
+        if (idSpan) idSpan.textContent = this.currentElem ? `ID: ${this.currentElem.id}` : '';
         const content = this.container.querySelector('#scada_content');
         content.innerHTML = '';
 
