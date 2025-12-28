@@ -137,7 +137,7 @@ export class Selector {
     }
 
     // loop and transform our bounding box until we reach our first rotation
-    const tlist = getTransformList(selected)
+    const tlist = selected.transform ? getTransformList(selected) : undefined
 
     // combines the parent transformation with that of the selected element if necessary
     const m = parentTransformationMatrix ? matrixMultiply(parentTransformationMatrix, transformListToTransform(tlist).matrix) : transformListToTransform(tlist).matrix
