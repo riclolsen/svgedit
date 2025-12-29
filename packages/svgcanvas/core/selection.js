@@ -306,6 +306,18 @@ const getIntersectionListMethod = (rect) => {
       }
     )
     rubberBBox = bb
+
+    // Transform rubberBox to parent group coordinate space
+    if (parent && parent !== svgCanvas.getSvgContent()) {
+      const m = parent.getScreenCTM().inverse().multiply(svgCanvas.getSvgContent().getScreenCTM())
+      const pt1 = transformPoint(rubberBBox.x, rubberBBox.y, m)
+      const pt2 = transformPoint(rubberBBox.x + rubberBBox.width, rubberBBox.y + rubberBBox.height, m)
+
+      rubberBBox.x = Math.min(pt1.x, pt2.x)
+      rubberBBox.y = Math.min(pt1.y, pt2.y)
+      rubberBBox.width = Math.abs(pt2.x - pt1.x)
+      rubberBBox.height = Math.abs(pt2.y - pt1.y)
+    }
   } else {
     rubberBBox = svgCanvas.getSvgContent().createSVGRect()
     rubberBBox.x = rect.x

@@ -49,7 +49,7 @@ export const textActionsMethod = (function () {
    * @param {Integer} index
    * @returns {void}
    */
-  function setCursor (index) {
+  function setCursor(index) {
     const empty = textinput.value === ''
     textinput.focus()
 
@@ -110,7 +110,7 @@ export const textActionsMethod = (function () {
    * @param {boolean} skipInput
    * @returns {void}
    */
-  function setSelection (start, end, skipInput) {
+  function setSelection(start, end, skipInput) {
     if (start === end) {
       setCursor(end)
       return
@@ -176,7 +176,7 @@ export const textActionsMethod = (function () {
    * @param {Float} mouseY
    * @returns {Integer}
    */
-  function getIndexFromPoint (mouseX, mouseY) {
+  function getIndexFromPoint(mouseX, mouseY) {
     // Position cursor here
     const pt = svgCanvas.getSvgRoot().createSVGPoint()
     pt.x = mouseX
@@ -211,7 +211,7 @@ export const textActionsMethod = (function () {
    * @param {Float} mouseY
    * @returns {void}
    */
-  function setCursorFromPoint (mouseX, mouseY) {
+  function setCursorFromPoint(mouseX, mouseY) {
     setCursor(getIndexFromPoint(mouseX, mouseY))
   }
 
@@ -222,7 +222,7 @@ export const textActionsMethod = (function () {
    * @param {boolean} apply
    * @returns {void}
    */
-  function setEndSelectionFromPoint (x, y, apply) {
+  function setEndSelectionFromPoint(x, y, apply) {
     const i1 = textinput.selectionStart
     const i2 = getIndexFromPoint(x, y)
 
@@ -237,7 +237,7 @@ export const textActionsMethod = (function () {
    * @param {Float} yIn
    * @returns {module:math.XYObject}
    */
-  function screenToPt (xIn, yIn) {
+  function screenToPt(xIn, yIn) {
     const out = {
       x: xIn,
       y: yIn
@@ -261,7 +261,7 @@ export const textActionsMethod = (function () {
    * @param {Float} yIn
    * @returns {module:math.XYObject}
    */
-  function ptToScreen (xIn, yIn) {
+  function ptToScreen(xIn, yIn) {
     const out = {
       x: xIn,
       y: yIn
@@ -284,7 +284,7 @@ export const textActionsMethod = (function () {
    * @param {Event} evt
    * @returns {void}
    */
-  function selectAll (evt) {
+  function selectAll(evt) {
     setSelection(0, curtext.textContent.length)
     evt.target.removeEventListener('click', selectAll)
   }
@@ -294,7 +294,7 @@ export const textActionsMethod = (function () {
    * @param {Event} evt
    * @returns {void}
    */
-  function selectWord (evt) {
+  function selectWord(evt) {
     if (!allowDbl || !curtext) {
       return
     }
@@ -326,7 +326,7 @@ export const textActionsMethod = (function () {
      * @param {Float} y
      * @returns {void}
      */
-    select (target, x, y) {
+    select(target, x, y) {
       curtext = target
       svgCanvas.textActions.toEditMode(x, y)
     },
@@ -334,7 +334,7 @@ export const textActionsMethod = (function () {
      * @param {Element} elem
      * @returns {void}
      */
-    start (elem) {
+    start(elem) {
       curtext = elem
       svgCanvas.textActions.toEditMode()
     },
@@ -345,7 +345,8 @@ export const textActionsMethod = (function () {
      * @param {Float} startY
      * @returns {void}
      */
-    mouseDown (evt, mouseTarget, startX, startY) {
+    mouseDown(evt, mouseTarget, startX, startY) {
+      if (!curtext) return
       const pt = screenToPt(startX, startY)
 
       textinput.focus()
@@ -360,7 +361,7 @@ export const textActionsMethod = (function () {
      * @param {Float} mouseY
      * @returns {void}
      */
-    mouseMove (mouseX, mouseY) {
+    mouseMove(mouseX, mouseY) {
       const pt = screenToPt(mouseX, mouseY)
       setEndSelectionFromPoint(pt.x, pt.y)
     },
@@ -370,7 +371,7 @@ export const textActionsMethod = (function () {
      * @param {Float} mouseY
      * @returns {void}
      */
-    mouseUp (evt, mouseX, mouseY) {
+    mouseUp(evt, mouseX, mouseY) {
       const pt = screenToPt(mouseX, mouseY)
 
       setEndSelectionFromPoint(pt.x, pt.y, true)
@@ -402,7 +403,8 @@ export const textActionsMethod = (function () {
      * @param {Float} y
      * @returns {void}
      */
-    toEditMode (x, y) {
+    toEditMode(x, y) {
+      if (!curtext) return
       allowDbl = false
       svgCanvas.setCurrentMode('textedit')
       svgCanvas.selectorManager.requestSelector(curtext).showGrips(false)
@@ -435,7 +437,7 @@ export const textActionsMethod = (function () {
      * @fires module:svgcanvas.SvgCanvas#event:selected
      * @returns {void}
      */
-    toSelectMode (selectElem) {
+    toSelectMode(selectElem) {
       svgCanvas.setCurrentMode('select')
       clearInterval(blinker)
       blinker = null
@@ -471,13 +473,13 @@ export const textActionsMethod = (function () {
      * @param {Element} elem
      * @returns {void}
      */
-    setInputElem (elem) {
+    setInputElem(elem) {
       textinput = elem
     },
     /**
      * @returns {void}
      */
-    clear () {
+    clear() {
       if (svgCanvas.getCurrentMode() === 'textedit') {
         svgCanvas.textActions.toSelectMode()
       }
@@ -486,7 +488,7 @@ export const textActionsMethod = (function () {
      * @param {Element} _inputElem Not in use
      * @returns {void}
      */
-    init (_inputElem) {
+    init(_inputElem) {
       if (!curtext) {
         return
       }

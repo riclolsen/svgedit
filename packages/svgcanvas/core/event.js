@@ -128,6 +128,8 @@ const mouseMoveEvent = (evt) => {
   let box
 
   const pt = transformPoint(evt.clientX, evt.clientY, svgCanvas.getrootSctm())
+  const rootSctm = svgCanvas.getSvgContent().getScreenCTM().inverse()
+  const rootPt = transformPoint(evt.clientX, evt.clientY, rootSctm)
   const mouseX = pt.x * zoom
   const mouseY = pt.y * zoom
   const shape = getElement(svgCanvas.getId())
@@ -176,13 +178,13 @@ const mouseMoveEvent = (evt) => {
       break
     }
     case 'multiselect': {
-      realX *= zoom
-      realY *= zoom
+      realX = rootPt.x * zoom
+      realY = rootPt.y * zoom
       assignAttributes(svgCanvas.getRubberBox(), {
-        x: Math.min(svgCanvas.getRStartX(), realX),
-        y: Math.min(svgCanvas.getRStartY(), realY),
-        width: Math.abs(realX - svgCanvas.getRStartX()),
-        height: Math.abs(realY - svgCanvas.getRStartY())
+        x: Math.min(svgCanvas.getRStartX() * zoom, realX),
+        y: Math.min(svgCanvas.getRStartY() * zoom, realY),
+        width: Math.abs(realX - svgCanvas.getRStartX() * zoom),
+        height: Math.abs(realY - svgCanvas.getRStartY() * zoom)
       }, 100)
 
       // for each selected:
@@ -312,8 +314,8 @@ const mouseMoveEvent = (evt) => {
       break
     }
     case 'zoom': {
-      realX *= zoom
-      realY *= zoom
+      realX = rootPt.x * zoom
+      realY = rootPt.y * zoom
       assignAttributes(svgCanvas.getRubberBox(), {
         x: Math.min(svgCanvas.getRStartX() * zoom, realX),
         y: Math.min(svgCanvas.getRStartY() * zoom, realY),
@@ -387,6 +389,7 @@ const mouseMoveEvent = (evt) => {
       break
     }
     case 'circle': {
+      if (!shape) return
       cx = Number(shape.getAttribute('cx'))
       cy = Number(shape.getAttribute('cy'))
       let rad = Math.sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy))
@@ -397,6 +400,7 @@ const mouseMoveEvent = (evt) => {
       break
     }
     case 'ellipse': {
+      if (!shape) return
       cx = Number(shape.getAttribute('cx'))
       cy = Number(shape.getAttribute('cy'))
       if (svgCanvas.getCurConfig().gridSnapping) {
@@ -729,7 +733,7 @@ const mouseUpEvent = (evt) => {
     }
       break
     case 'circle':
-      keep = (element.getAttribute('r') !== '0')
+      keep = (element && element.getAttribute('r') !== '0')
       break
     case 'ellipse': {
       const rx = Number(element.getAttribute('rx'))
@@ -1007,10 +1011,12 @@ const mouseDownEvent = (evt) => {
   // realX/y ignores grid-snap value
   const realX = x
   svgCanvas.setStartX(x)
-  svgCanvas.setRStartX(x)
+  const rootSctm = svgCanvas.getSvgContent().getScreenCTM().inverse()
+  const rootPt = transformPoint(evt.clientX, evt.clientY, rootSctm)
+  svgCanvas.setRStartX(rootPt.x)
   const realY = y
   svgCanvas.setStartY(y)
-  svgCanvas.setRStartY(y)
+  svgCanvas.setRStartY(rootPt.y)
 
   if (svgCanvas.getCurConfig().gridSnapping) {
     x = snapToGrid(x)
@@ -1340,7 +1346,8 @@ const DOMMouseScrollEvent = (e) => {
 
   e.preventDefault()
 
-  svgCanvas.setRootSctm($id('svgcontent').querySelector('g').getScreenCTM().inverse())
+  // svgCanvas.setRootSctm($id('svgcontent').querySelector('g').getScreenCTM().inverse())
+  svgCanvas.setRootSctm($id('svgcontent').getScreenCTM().inverse())
 
   const workarea = document.getElementById('workarea')
   const scrbar = 15
