@@ -121,7 +121,10 @@ export class ScadaUI {
 
     renderForm() {
         const idSpan = this.container.querySelector('#scada_element_id');
-        if (idSpan) idSpan.textContent = this.currentElem ? `ID: ${this.currentElem.id}` : '';
+        if (idSpan) {
+            const tagName = this.currentElem ? this.currentElem.tagName.toLowerCase() : '';
+            idSpan.textContent = this.currentElem ? `ID: ${this.currentElem.id} (${tagName})` : '';
+        }
         const content = this.container.querySelector('#scada_content');
         content.innerHTML = '';
 
