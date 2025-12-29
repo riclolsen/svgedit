@@ -44,7 +44,6 @@ export const scadaDefinitions = {
             { name: "tag", type: "text", label: "Tag" },
             { name: "min", type: "number", label: "Min" },
             { name: "max", type: "number", label: "Max" },
-            { name: "direction", type: "select", label: "Direction", options: ["Up", "Down", "Left", "Right"], default: "Up" }
         ]
     },
     opacity: {
