@@ -110,5 +110,14 @@ export const scadaDefinitions = {
             { name: "size", type: "number", label: "Font Size", default: 12 },
             { name: "style", type: "text", label: "Style", default: "" }
         ]
+    },
+    slider: {
+        label: "Slider",
+        fields: [
+            { name: "tag", type: "text", label: "Tag", default: "" },
+            { name: "min", type: "number", label: "Min", default: 0 },
+            { name: "max", type: "number", label: "Max", default: 100 },
+            { name: "readonly", type: "number", label: "Read Only", default: 1 }
+        ]
     }
 };
