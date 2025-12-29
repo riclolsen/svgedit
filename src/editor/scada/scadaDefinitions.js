@@ -46,7 +46,7 @@ export const scadaDefinitions = {
             { name: "max", type: "number", label: "Max" },
         ]
     },
-    opacity: {
+    opac: {
         label: "Opacity",
         fields: [
             { name: "tag", type: "text", label: "Tag", default: "" },
@@ -65,7 +65,7 @@ export const scadaDefinitions = {
         ]
     },
     clone: {
-        label: "Clone",
+        label: "Clone/Faceplate",
         fields: [
             {
                 name: "map",

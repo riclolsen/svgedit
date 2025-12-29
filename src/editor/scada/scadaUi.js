@@ -135,11 +135,13 @@ export class ScadaUI {
             wrapper.style.padding = '5px';
             wrapper.style.backgroundColor = '#fff';
 
+            const def = scadaDefinitions[anim.attr];
+            const headerLabel = def ? def.label : anim.attr.toUpperCase();
+
             const title = document.createElement('div');
-            title.innerHTML = `<b>${anim.attr.toUpperCase()}</b> <button class="remove-btn" data-index="${index}" style="float:right;color:red;">x</button>`;
+            title.innerHTML = `<b>${headerLabel}</b> <button class="remove-btn" data-index="${index}" style="float:right;color:red;">x</button>`;
             wrapper.appendChild(title);
 
-            const def = scadaDefinitions[anim.attr];
             if (def) {
                 def.fields.forEach(field => {
                     const row = document.createElement('div');
@@ -498,13 +500,28 @@ export class ScadaUI {
             if (!existingAttrs.has(k)) {
                 const tagName = (this.currentElem?.tagName || '').toLowerCase();
 
-                // Filter: Text attribute should only be available for text objects
-                if (k === 'text' && tagName !== 'text') {
+                // Filter: Clone/Faceplate should only be available for group objects
+                if (k === 'clone' && tagName !== 'g') {
                     return;
                 }
 
-                // Filter: Color and Bar Graph should not be available for group objects
-                if (tagName === 'g' && (k === 'color' || k === 'bar')) {
+                // Filter: Text and Get attribute should only be available for text objects
+                if ((k === 'text' || k === 'get') && tagName !== 'text') {
+                    return;
+                }
+
+                // Filter: Zoom should not be available for text objects
+                if (k === 'zoom' && tagName === 'text') {
+                    return;
+                }
+
+                // Filter: Bar Graph should only be available for rect objects
+                if (k === 'bar' && tagName !== 'rect') {
+                    return;
+                }
+
+                // Filter: Color should not be available for group objects
+                if (tagName === 'g' && k === 'color') {
                     return;
                 }
 
