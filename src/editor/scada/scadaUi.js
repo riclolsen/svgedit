@@ -147,8 +147,20 @@ export class ScadaUI {
                     const label = document.createElement('label');
                     const labelStr = field.label || (field.name ? field.name.charAt(0).toUpperCase() + field.name.slice(1) : 'Unknown');
                     label.textContent = labelStr + ': ';
-                    label.style.display = 'block';
                     label.style.fontSize = '0.8em';
+                    label.style.whiteSpace = 'nowrap';
+
+                    if (field.type === 'checkbox') {
+                        row.style.display = 'flex';
+                        row.style.alignItems = 'center';
+                        row.style.flexDirection = 'row';
+                        row.style.gap = '8px';
+                        label.style.display = 'inline-block';
+                        label.style.margin = '0';
+                        label.style.cursor = 'pointer';
+                    } else {
+                        label.style.display = 'block';
+                    }
 
                     let input;
                     if (field.type === 'select') {
@@ -414,18 +426,30 @@ export class ScadaUI {
                         input = document.createElement('textarea');
                         input.style.height = '100px';
                         input.style.fontFamily = 'monospace';
+                    } else if (field.type === 'checkbox') {
+                        input = document.createElement('input');
+                        input.type = 'checkbox';
                     } else {
                         input = document.createElement('input');
                         input.type = field.type === 'number' ? 'number' : 'text';
                     }
 
                     if (field.type !== 'list') {
-                        input.value = anim[field.name] ?? field.default ?? '';
-                        input.style.width = '100%';
-                        input.onchange = (e) => {
-                            anim[field.name] = e.target.value;
-                            this.save();
-                        };
+                        if (field.type === 'checkbox') {
+                            input.checked = (anim[field.name] ?? field.default) == 1;
+                            input.style.cursor = 'pointer';
+                            input.onchange = (e) => {
+                                anim[field.name] = e.target.checked ? 1 : 0;
+                                this.save();
+                            };
+                        } else {
+                            input.value = anim[field.name] ?? field.default ?? '';
+                            input.style.width = '100%';
+                            input.onchange = (e) => {
+                                anim[field.name] = e.target.value;
+                                this.save();
+                            };
+                        }
                     }
 
                     row.appendChild(label);

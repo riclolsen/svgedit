@@ -117,7 +117,7 @@ export const scadaDefinitions = {
             { name: "tag", type: "text", label: "Tag", default: "" },
             { name: "min", type: "number", label: "Min", default: 0 },
             { name: "max", type: "number", label: "Max", default: 100 },
-            { name: "readonly", type: "number", label: "Read Only", default: 1 }
+            { name: "readonly", type: "checkbox", label: "Read Only", default: 1 }
         ]
     }
 };
