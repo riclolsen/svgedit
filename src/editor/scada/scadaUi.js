@@ -167,8 +167,9 @@ export class ScadaUI {
                         input = document.createElement('select');
                         field.options.forEach(opt => {
                             const o = document.createElement('option');
-                            o.value = opt;
-                            o.textContent = opt;
+                            const isObj = typeof opt === 'object' && opt !== null;
+                            o.value = isObj ? opt.value : opt;
+                            o.textContent = isObj ? opt.label : opt;
                             input.appendChild(o);
                         });
                     } else if (field.type === 'list') {
@@ -223,8 +224,9 @@ export class ScadaUI {
                                         if (ifield.options) {
                                             ifield.options.forEach(opt => {
                                                 const o = document.createElement('option');
-                                                o.value = opt;
-                                                o.textContent = opt;
+                                                const isObj = typeof opt === 'object' && opt !== null;
+                                                o.value = isObj ? opt.value : opt;
+                                                o.textContent = isObj ? opt.label : opt;
                                                 iInput.appendChild(o);
                                             });
                                         }
@@ -344,7 +346,16 @@ export class ScadaUI {
                                         iInput.placeholder = ifield.label || '';
                                         iInput.title = ifield.label || '';
                                         iInput.onchange = (e) => {
-                                            tempObj[ifield.name] = e.target.value;
+                                            let val = e.target.value;
+                                            if (ifield.type === 'select') {
+                                                const opt = ifield.options.find(o =>
+                                                    (typeof o === 'object' ? String(o.value) : String(o)) === val
+                                                );
+                                                if (opt && typeof opt === 'object') {
+                                                    val = opt.value;
+                                                }
+                                            }
+                                            tempObj[ifield.name] = val;
 
                                             if (field.itemType === 'string') {
                                                 items[idx] = e.target.value;
@@ -446,7 +457,16 @@ export class ScadaUI {
                             input.value = anim[field.name] ?? field.default ?? '';
                             input.style.width = '100%';
                             input.onchange = (e) => {
-                                anim[field.name] = e.target.value;
+                                let val = e.target.value;
+                                if (field.type === 'select') {
+                                    const opt = field.options.find(o =>
+                                        (typeof o === 'object' ? String(o.value) : String(o)) === val
+                                    );
+                                    if (opt && typeof opt === 'object') {
+                                        val = opt.value;
+                                    }
+                                }
+                                anim[field.name] = val;
                                 this.save();
                             };
                         }

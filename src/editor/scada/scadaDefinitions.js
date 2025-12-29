@@ -142,5 +142,36 @@ export const scadaDefinitions = {
                 ]
             }
         ]
+    },
+    open: {
+        label: "Open",
+        fields: [
+            { name: "src", type: "text", label: "Source", default: "" },
+            {
+                name: "istag",
+                type: "select",
+                label: "Source Type",
+                options: [
+                    { label: "URL", value: 0 },
+                    { label: "TAG", value: 1 }
+                ],
+                default: 0
+            },
+            {
+                name: "type",
+                type: "select",
+                label: "Target",
+                options: [
+                    { label: "Current Window", value: "_self" },
+                    { label: "New Window", value: "_blank" },
+                    { label: "Shared Window", value: "_shared" }
+                ],
+                default: "_self"
+            },
+            { name: "width", type: "number", label: "Width", default: 500 },
+            { name: "height", type: "number", label: "Height", default: 400 },
+            { name: "x", type: "number", label: "X", default: 100 },
+            { name: "y", type: "number", label: "Y", default: 100 }
+        ]
     }
 };
