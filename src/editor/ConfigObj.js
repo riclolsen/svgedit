@@ -196,7 +196,8 @@ export default class ConfigObj {
       'ext-opensave',
       'ext-layer_view',
       'ext-scada',
-      'ext-code_editor'
+      'ext-code_editor',
+      'ext-server_opensave'
     ]
     this.curConfig = {
       // We do not put on defaultConfig to simplify object copying
