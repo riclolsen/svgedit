@@ -177,7 +177,9 @@ export class ScadaUI {
 
                                 // Prepare temporary object for editing
                                 let tempObj = {};
-                                if (typeof item === 'string' && field.separator) {
+                                if (field.itemType === 'string') {
+                                    tempObj[field.itemFields[0].name] = item;
+                                } else if (typeof item === 'string' && field.separator) {
                                     if (field.separator === '=') {
                                         const eqIdx = item.indexOf('=');
                                         if (eqIdx !== -1) {
@@ -332,7 +334,9 @@ export class ScadaUI {
                                         iInput.onchange = (e) => {
                                             tempObj[ifield.name] = e.target.value;
 
-                                            if (field.separator) {
+                                            if (field.itemType === 'string') {
+                                                items[idx] = e.target.value;
+                                            } else if (field.separator) {
                                                 // Reconstruct string
                                                 let str = '';
                                                 if (field.separator === '=') {
@@ -368,7 +372,9 @@ export class ScadaUI {
                             addBtn.onclick = () => {
                                 if (!anim[field.name]) anim[field.name] = [];
 
-                                if (field.separator) {
+                                if (field.itemType === 'string') {
+                                    items.push('');
+                                } else if (field.separator) {
                                     items.push(field.separator);
                                 } else {
                                     const newItem = {};

@@ -95,5 +95,20 @@ export const scadaDefinitions = {
             { name: "min", type: "number", label: "Min", default: 0 },
             { name: "max", type: "number", label: "Max", default: 100 }
         ]
+    },
+    tooltips: {
+        label: "Tooltips",
+        fields: [
+            {
+                name: "param",
+                type: "list",
+                label: "Lines",
+                default: [],
+                itemType: "string",
+                itemFields: [{ name: "line", label: "Line", type: "text" }]
+            },
+            { name: "size", type: "number", label: "Font Size", default: 12 },
+            { name: "style", type: "text", label: "Style", default: "" }
+        ]
     }
 };
