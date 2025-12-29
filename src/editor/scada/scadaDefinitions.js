@@ -31,7 +31,10 @@ export const scadaDefinitions = {
         label: "Set",
         fields: [
             { name: "tag", type: "text", label: "Tag", default: "" },
-            { name: "src", type: "text", label: "Source Model ID", default: "" }, // for copy_xsac_from
+            { name: "src", type: "text", label: "Source", default: "" },
+            { name: "prompt", type: "text", label: "Prompt", default: "" },
+            { name: "type", type: "select", label: "Type", options: ["Data", "Variable"], default: "Data" },
+            { name: "align", type: "select", label: "Align", options: ["Left", "Center", "Right"], default: "Right" }
         ]
     },
     // Add other types as needed: bar, rotate, etc.
