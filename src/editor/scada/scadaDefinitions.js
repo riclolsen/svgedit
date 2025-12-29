@@ -87,5 +87,13 @@ export const scadaDefinitions = {
                 ]
             }
         ]
+    },
+    rotate: {
+        label: "Rotate",
+        fields: [
+            { name: "tag", type: "text", label: "Tag", default: "" },
+            { name: "min", type: "number", label: "Min", default: 0 },
+            { name: "max", type: "number", label: "Max", default: 100 }
+        ]
     }
 };
