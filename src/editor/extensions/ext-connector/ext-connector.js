@@ -25,7 +25,7 @@ const loadExtensionTranslation = async function (svgEditor) {
 
 export default {
   name,
-  async init (S) {
+  async init(S) {
     const svgEditor = this
     const { svgCanvas } = svgEditor
     const { getElement, $id, $click, addSVGElementsFromJson } = svgCanvas
@@ -254,9 +254,15 @@ export default {
 
           // If part is null or undefined, fetch it and store it
           if (!part) {
-            part = document.getElementById(
-              connector.attributes['se:connector'].value.split(' ')[i]
-            )
+            const connAttr = connector.getAttributeNS(seNs, 'connector') || connector.getAttribute('se:connector')
+            if (!connAttr) continue
+
+            const connData = connAttr.split(' ')
+            if (!connData[i]) continue
+
+            part = document.getElementById(connData[i])
+            if (!part) continue
+
             dataStorage.put(connector, `c_${pos}`, part.id)
             dataStorage.put(
               connector,
@@ -275,20 +281,22 @@ export default {
         // Loop through the starting and ending elements connected by the connector
         for (let i = 0; i < 2; i++) {
           const cElem = parts[i]
-          const parents = svgCanvas.getParents(cElem?.parentNode)
-
-          // Check if the element is part of a selected group
-          for (const el of parents) {
-            if (elems.includes(el)) {
-              addThis = true
-              break
-            }
-          }
 
           // If element is missing or parent is null, remove the connector
           if (!cElem || !cElem.parentNode) {
             connector.remove()
             continue
+          }
+
+          const parents = svgCanvas.getParents(cElem.parentNode)
+          if (parents) {
+            // Check if the element is part of a selected group
+            for (const el of parents) {
+              if (elems.includes(el)) {
+                addThis = true
+                break
+              }
+            }
           }
 
           // If element is in the selection or part of a selected group
@@ -393,7 +401,7 @@ export default {
 
     return {
       name: svgEditor.i18next.t(`${name}:name`),
-      callback () {
+      callback() {
         // Add the button and its handler(s)
         const buttonTemplate = document.createElement('template')
         const title = `${name}:buttons.0.title`
@@ -407,7 +415,7 @@ export default {
           }
         })
       },
-      mouseDown (opts) {
+      mouseDown(opts) {
         // Retrieve necessary data from the SVG canvas and the event object
         const dataStorage = svgCanvas.getDataStorage()
         const svgContent = svgCanvas.getSvgContent()
@@ -425,7 +433,7 @@ export default {
           const parents = svgCanvas.getParents(mouseTarget.parentNode)
 
           // Check if the target is a child of the main SVG content
-          if (parents.includes(svgContent)) {
+          if (parents && parents.includes(svgContent)) {
             // Identify the connectable element, considering foreignObject elements
             const fo = svgCanvas.getClosest(
               mouseTarget.parentNode,
@@ -474,7 +482,7 @@ export default {
 
         return undefined
       },
-      mouseMove (opts) {
+      mouseMove(opts) {
         // Exit early if there are no connectors
         if (connections.length === 0) return
 
@@ -518,7 +526,7 @@ export default {
           }
         }
       },
-      mouseUp (opts) {
+      mouseUp(opts) {
         // Get necessary data and initial setups
         const dataStorage = svgCanvas.getDataStorage()
         const svgContent = svgCanvas.getSvgContent()
@@ -534,7 +542,7 @@ export default {
 
         // Check if the target is a child of the main SVG content
         const parents = svgCanvas.getParents(mouseTarget.parentNode)
-        const isInSvgContent = parents.includes(svgContent)
+        const isInSvgContent = parents && parents.includes(svgContent)
 
         if (mouseTarget === startElem) {
           // Case: Started drawing line via click
@@ -612,7 +620,7 @@ export default {
           started
         }
       },
-      selectedChanged (opts) {
+      selectedChanged(opts) {
         // Get necessary data storage and SVG content
         const dataStorage = svgCanvas.getDataStorage()
         const svgContent = svgCanvas.getSvgContent()
@@ -645,7 +653,7 @@ export default {
         // Update connectors based on selected elements
         updateConnectors(svgCanvas.getSelectedElements())
       },
-      elementChanged (opts) {
+      elementChanged(opts) {
         // Get the necessary data storage
         const dataStorage = svgCanvas.getDataStorage()
 
@@ -669,9 +677,8 @@ export default {
           if (elem.tagName === 'line' && markerMid) {
             const { x1, x2, y1, y2, id } = elem.attributes
 
-            const midPt = `${(Number(x1.value) + Number(x2.value)) / 2},${
-              (Number(y1.value) + Number(y2.value)) / 2
-            }`
+            const midPt = `${(Number(x1.value) + Number(x2.value)) / 2},${(Number(y1.value) + Number(y2.value)) / 2
+              }`
             const pline = addSVGElementsFromJson({
               element: 'polyline',
               attr: {
@@ -701,7 +708,7 @@ export default {
           updateConnectors(svgCanvas.getSelectedElements())
         }
       },
-      IDsUpdated (input) {
+      IDsUpdated(input) {
         const remove = []
         input.elems.forEach(function (elem) {
           if ('se:connector' in elem.attr) {
@@ -721,7 +728,7 @@ export default {
         })
         return { remove }
       },
-      toolButtonStateUpdate (opts) {
+      toolButtonStateUpdate(opts) {
         const button = document.getElementById('tool_connect')
         if (opts.nostroke && button.pressed === true) {
           svgEditor.clickSelect()
