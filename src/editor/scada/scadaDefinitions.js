@@ -6,7 +6,7 @@
 
 export const scadaDefinitions = {
     get: {
-        label: "Get (Text)",
+        label: "Get",
         fields: [
             { name: "tag", type: "text", label: "Tag", default: "" },
             { name: "align", type: "select", label: "Align", options: ["Left", "Center", "Right"], default: "Left" },
@@ -28,7 +28,7 @@ export const scadaDefinitions = {
         ]
     },
     set: {
-        label: "Set / Clone",
+        label: "Set",
         fields: [
             { name: "tag", type: "text", label: "Tag", default: "" },
             { name: "src", type: "text", label: "Source Model ID", default: "" }, // for copy_xsac_from
@@ -36,7 +36,7 @@ export const scadaDefinitions = {
     },
     // Add other types as needed: bar, rotate, etc.
     bar: {
-        label: "Bar Graph",
+        label: "Bar",
         fields: [
             { name: "tag", type: "text", label: "Tag" },
             { name: "min", type: "number", label: "Min" },
@@ -125,6 +125,22 @@ export const scadaDefinitions = {
         fields: [
             { name: "tag", type: "text", label: "Tag", default: "" },
             { name: "align", type: "select", label: "Align", options: ["Left", "Center", "Right"], default: "Center" }
+        ]
+    },
+    text: {
+        label: "Text",
+        fields: [
+            { name: "tag", type: "text", label: "Tag", default: "" },
+            {
+                name: "map",
+                type: "list",
+                label: "Map Entries",
+                separator: "=",
+                itemFields: [
+                    { name: "value", label: "Value", type: "text" },
+                    { name: "text", label: "Text", type: "text" }
+                ]
+            }
         ]
     }
 };

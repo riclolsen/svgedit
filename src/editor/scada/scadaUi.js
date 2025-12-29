@@ -476,6 +476,18 @@ export class ScadaUI {
 
         Object.keys(scadaDefinitions).forEach(k => {
             if (!existingAttrs.has(k)) {
+                const tagName = (this.currentElem?.tagName || '').toLowerCase();
+
+                // Filter: Text attribute should only be available for text objects
+                if (k === 'text' && tagName !== 'text') {
+                    return;
+                }
+
+                // Filter: Color and Bar Graph should not be available for group objects
+                if (tagName === 'g' && (k === 'color' || k === 'bar')) {
+                    return;
+                }
+
                 const opt = document.createElement('option');
                 opt.value = k;
                 opt.textContent = scadaDefinitions[k].label;
