@@ -119,5 +119,12 @@ export const scadaDefinitions = {
             { name: "max", type: "number", label: "Max", default: 100 },
             { name: "readonly", type: "checkbox", label: "Read Only", default: 1 }
         ]
+    },
+    zoom: {
+        label: "Zoom",
+        fields: [
+            { name: "tag", type: "text", label: "Tag", default: "" },
+            { name: "align", type: "select", label: "Align", options: ["Left", "Center", "Right"], default: "Center" }
+        ]
     }
 };
