@@ -27,9 +27,9 @@ export default {
 
         // Default endpoints
         const serverUrl = svgEditor.configObj.pref('server_url') || '';
-        const listPath = svgEditor.configObj.pref('server_list_path') || '/auth/listDisplays';
-        const openPath = svgEditor.configObj.pref('server_open_path') || '/auth/openDisplay';
-        const savePath = svgEditor.configObj.pref('server_save_path') || '/auth/saveDisplay';
+        const listPath = svgEditor.configObj.pref('server_list_path') || '/Invoke/auth/listDisplays';
+        const openPath = svgEditor.configObj.pref('server_open_path') || '/Invoke/auth/openDisplay';
+        const savePath = svgEditor.configObj.pref('server_save_path') || '/Invoke/auth/saveDisplay';
 
         let currentFilename = '';
 
