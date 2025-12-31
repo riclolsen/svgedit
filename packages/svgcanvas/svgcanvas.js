@@ -115,14 +115,14 @@ class SvgCanvas {
    * @param {HTMLElement} container - The container HTML element that should hold the SVG root element
    * @param {module:SVGeditor.configObj.curConfig} config - An object that contains configuration data
    */
-  constructor (container, config) {
+  constructor(container, config) {
     // imported function made available as methods
     this.initializeSvgCanvasMethods()
     unitsInit(this)
     const { pathActions } = pathModule
 
     // initialize class variables
-    this.saveOptions = { round_digits: 2 } // Object with save options
+    this.saveOptions = { round_digits: 6 } // Object with save options
     this.importIds = {} // Object with IDs for imported files, to see if one was already added
     this.extensions = {} // Object to contain all included extensions
     this.removedElements = {} // Map of deleted reference elements
@@ -313,120 +313,120 @@ class SvgCanvas {
     this.modeChangeEvent()
   } // End constructor
 
-  getSvgOption () {
+  getSvgOption() {
     return this.saveOptions
   }
 
-  setSvgOption (key, value) {
+  setSvgOption(key, value) {
     this.saveOptions[key] = value
   }
 
-  getSelectedElements () {
+  getSelectedElements() {
     return this.selectedElements
   }
 
-  setSelectedElements (key, value) {
+  setSelectedElements(key, value) {
     this.selectedElements[key] = value
   }
 
-  setEmptySelectedElements () {
+  setEmptySelectedElements() {
     this.selectedElements = []
   }
 
-  getSvgRoot () {
+  getSvgRoot() {
     return this.svgroot
   }
 
-  getDOMDocument () {
+  getDOMDocument() {
     return this.svgdoc
   }
 
-  getDOMContainer () {
+  getDOMContainer() {
     return this.container
   }
 
-  getCurConfig () {
+  getCurConfig() {
     return this.curConfig
   }
 
-  setIdPrefix (p) {
+  setIdPrefix(p) {
     this.idprefix = p
   }
 
-  getCurrentDrawing () {
+  getCurrentDrawing() {
     return this.current_drawing_
   }
 
-  getCurShape () {
+  getCurShape() {
     return this.curShape
   }
 
-  getCurrentGroup () {
+  getCurrentGroup() {
     return this.currentGroup
   }
 
-  getBaseUnit () {
+  getBaseUnit() {
     return this.curConfig.baseUnit
   }
 
-  getHeight () {
+  getHeight() {
     return this.svgContent.getAttribute('height') / this.zoom
   }
 
-  getWidth () {
+  getWidth() {
     return this.svgContent.getAttribute('width') / this.zoom
   }
 
-  getRoundDigits () {
+  getRoundDigits() {
     return this.saveOptions.round_digits
   }
 
-  getSnappingStep () {
+  getSnappingStep() {
     return this.curConfig.snappingStep
   }
 
-  getGridSnapping () {
+  getGridSnapping() {
     return this.curConfig.gridSnapping
   }
 
-  getStartTransform () {
+  getStartTransform() {
     return this.startTransform
   }
 
-  setStartTransform (transform) {
+  setStartTransform(transform) {
     this.startTransform = transform
   }
 
-  getZoom () {
+  getZoom() {
     return this.zoom
   }
 
-  round (val) {
+  round(val) {
     return Number.parseInt(val * this.zoom) / this.zoom
   }
 
-  createSVGElement (jsonMap) {
+  createSVGElement(jsonMap) {
     return this.addSVGElementsFromJson(jsonMap)
   }
 
-  getContainer () {
+  getContainer() {
     return this.container
   }
 
-  setStarted (s) {
+  setStarted(s) {
     this.started = s
   }
 
-  getRubberBox () {
+  getRubberBox() {
     return this.rubberBox
   }
 
-  setRubberBox (rb) {
+  setRubberBox(rb) {
     this.rubberBox = rb
     return this.rubberBox
   }
 
-  addPtsToSelection ({ closedSubpath, grips }) {
+  addPtsToSelection({ closedSubpath, grips }) {
     // TODO: Correct this:
     this.pathActions.canDeleteNodes = true
     this.pathActions.closed_subpath = closedSubpath
@@ -441,378 +441,378 @@ class SvgCanvas {
    * @fires module:svgcanvas.SvgCanvas#event:changed
    * @returns {void}
    */
-  endChanges ({ cmd, elem }) {
+  endChanges({ cmd, elem }) {
     this.addCommandToHistory(cmd)
     this.call('changed', [elem])
   }
 
-  getCurrentMode () {
+  getCurrentMode() {
     return this.currentMode
   }
 
-  setCurrentMode (cm) {
+  setCurrentMode(cm) {
     this.currentMode = cm
     return this.currentMode
   }
 
-  getDrawnPath () {
+  getDrawnPath() {
     return this.drawnPath
   }
 
-  setDrawnPath (dp) {
+  setDrawnPath(dp) {
     this.drawnPath = dp
     return this.drawnPath
   }
 
-  setCurrentGroup (cg) {
+  setCurrentGroup(cg) {
     this.currentGroup = cg
   }
 
-  changeSvgContent () {
+  changeSvgContent() {
     this.call('changed', [this.svgContent])
   }
 
-  getStarted () {
+  getStarted() {
     return this.started
   }
 
-  getCanvas () {
+  getCanvas() {
     return this
   }
 
-  getrootSctm () {
+  getrootSctm() {
     return this.rootSctm
   }
 
-  getStartX () {
+  getStartX() {
     return this.startX
   }
 
-  setStartX (value) {
+  setStartX(value) {
     this.startX = value
   }
 
-  getStartY () {
+  getStartY() {
     return this.startY
   }
 
-  setStartY (value) {
+  setStartY(value) {
     this.startY = value
   }
 
-  getRStartX () {
+  getRStartX() {
     return this.rStartX
   }
 
-  getRStartY () {
+  getRStartY() {
     return this.rStartY
   }
 
-  getInitBbox () {
+  getInitBbox() {
     return this.initBbox
   }
 
-  getCurrentResizeMode () {
+  getCurrentResizeMode() {
     return this.currentResizeMode
   }
 
-  getJustSelected () {
+  getJustSelected() {
     return this.justSelected
   }
 
-  getOpacAni () {
+  getOpacAni() {
     return this.opacAni
   }
 
-  getParameter () {
+  getParameter() {
     return this.parameter
   }
 
-  getNextParameter () {
+  getNextParameter() {
     return this.nextParameter
   }
 
-  getStepCount () {
+  getStepCount() {
     return STEP_COUNT
   }
 
-  getThreSholdDist () {
+  getThreSholdDist() {
     return THRESHOLD_DIST
   }
 
-  getSumDistance () {
+  getSumDistance() {
     return this.sumDistance
   }
 
-  getStart (key) {
+  getStart(key) {
     return this.start[key]
   }
 
-  getEnd (key) {
+  getEnd(key) {
     return this.end[key]
   }
 
-  getbSpline (key) {
+  getbSpline(key) {
     return this.bSpline[key]
   }
 
-  getNextPos (key) {
+  getNextPos(key) {
     return this.nextPos[key]
   }
 
-  getControllPoint1 (key) {
+  getControllPoint1(key) {
     return this.controllPoint1[key]
   }
 
-  getControllPoint2 (key) {
+  getControllPoint2(key) {
     return this.controllPoint2[key]
   }
 
-  getFreehand (key) {
+  getFreehand(key) {
     return this.freehand[key]
   }
 
-  getDrawing () {
+  getDrawing() {
     return this.getCurrentDrawing()
   }
 
-  getDAttr () {
+  getDAttr() {
     return this.dAttr
   }
 
-  getLastGoodImgUrl () {
+  getLastGoodImgUrl() {
     return this.lastGoodImgUrl
   }
 
-  getCurText (key) {
+  getCurText(key) {
     return this.curText[key]
   }
 
-  setDAttr (value) {
+  setDAttr(value) {
     this.dAttr = value
   }
 
-  setEnd (key, value) {
+  setEnd(key, value) {
     this.end[key] = value
   }
 
-  setControllPoint1 (key, value) {
+  setControllPoint1(key, value) {
     this.controllPoint1[key] = value
   }
 
-  setControllPoint2 (key, value) {
+  setControllPoint2(key, value) {
     this.controllPoint2[key] = value
   }
 
-  setJustSelected (value) {
+  setJustSelected(value) {
     this.justSelected = value
   }
 
-  setParameter (value) {
+  setParameter(value) {
     this.parameter = value
   }
 
-  setStart (value) {
+  setStart(value) {
     this.start = value
   }
 
-  setRStartX (value) {
+  setRStartX(value) {
     this.rStartX = value
   }
 
-  setRStartY (value) {
+  setRStartY(value) {
     this.rStartY = value
   }
 
-  setSumDistance (value) {
+  setSumDistance(value) {
     this.sumDistance = value
   }
 
-  setbSpline (value) {
+  setbSpline(value) {
     this.bSpline = value
   }
 
-  setNextPos (value) {
+  setNextPos(value) {
     this.nextPos = value
   }
 
-  setNextParameter (value) {
+  setNextParameter(value) {
     this.nextParameter = value
   }
 
-  setCurText (key, value) {
+  setCurText(key, value) {
     this.curText[key] = value
   }
 
-  setFreehand (key, value) {
+  setFreehand(key, value) {
     this.freehand[key] = value
   }
 
-  setCurBBoxes (value) {
+  setCurBBoxes(value) {
     this.curBBoxes = value
   }
 
-  getCurBBoxes () {
+  getCurBBoxes() {
     return this.curBBoxes
   }
 
-  setInitBbox (value) {
+  setInitBbox(value) {
     this.initBbox = value
   }
 
-  setRootSctm (value) {
+  setRootSctm(value) {
     this.rootSctm = value
   }
 
-  setCurrentResizeMode (value) {
+  setCurrentResizeMode(value) {
     this.currentResizeMode = value
   }
 
-  getLastClickPoint (key) {
+  getLastClickPoint(key) {
     return this.lastClickPoint[key]
   }
 
-  setLastClickPoint (value) {
+  setLastClickPoint(value) {
     this.lastClickPoint = value
   }
 
-  getId () {
+  getId() {
     return this.getCurrentDrawing().getId()
   }
 
-  getUIStrings () {
+  getUIStrings() {
     return this.uiStrings
   }
 
-  getNsMap () {
+  getNsMap() {
     return this.nsMap
   }
 
-  getSvgOptionApply () {
+  getSvgOptionApply() {
     return this.saveOptions.apply
   }
 
-  getSvgOptionImages () {
+  getSvgOptionImages() {
     return this.saveOptions.images
   }
 
-  getEncodableImages (key) {
+  getEncodableImages(key) {
     return this.encodableImages[key]
   }
 
-  setEncodableImages (key, value) {
+  setEncodableImages(key, value) {
     this.encodableImages[key] = value
   }
 
-  getVisElems () {
+  getVisElems() {
     return visElems
   }
 
-  getIdPrefix () {
+  getIdPrefix() {
     return this.idprefix
   }
 
-  getDataStorage () {
+  getDataStorage() {
     return dataStorage
   }
 
-  setZoom (value) {
+  setZoom(value) {
     this.zoom = value
   }
 
-  getImportIds (key) {
+  getImportIds(key) {
     return this.importIds[key]
   }
 
-  setImportIds (key, value) {
+  setImportIds(key, value) {
     this.importIds[key] = value
   }
 
-  setRemovedElements (key, value) {
+  setRemovedElements(key, value) {
     this.removedElements[key] = value
   }
 
-  setSvgContent (value) {
+  setSvgContent(value) {
     this.svgContent = value
   }
 
-  getrefAttrs () {
+  getrefAttrs() {
     return refAttrs
   }
 
-  setCanvas (key, value) {
+  setCanvas(key, value) {
     this[key] = value
   }
 
-  setCurProperties (key, value) {
+  setCurProperties(key, value) {
     this.curProperties[key] = value
   }
 
-  getCurProperties (key) {
+  getCurProperties(key) {
     return this.curProperties[key]
   }
 
-  setCurShape (key, value) {
+  setCurShape(key, value) {
     this.curShape[key] = value
   }
 
-  gettingSelectorManager () {
+  gettingSelectorManager() {
     return this.selectorManager
   }
 
-  getContentW () {
+  getContentW() {
     return this.contentW
   }
 
-  getContentH () {
+  getContentH() {
     return this.contentH
   }
 
-  getClipboardID () {
+  getClipboardID() {
     return CLIPBOARD_ID
   }
 
-  getSvgContent () {
+  getSvgContent() {
     return this.svgContent
   }
 
-  getExtensions () {
+  getExtensions() {
     return this.extensions
   }
 
-  getSelector () {
+  getSelector() {
     return Selector
   }
 
-  getMode () {
+  getMode() {
     return this.currentMode
   } // The current editor mode string
 
-  getNextId () {
+  getNextId() {
     return this.getCurrentDrawing().getNextId()
   }
 
-  getCurCommand () {
+  getCurCommand() {
     return this.curCommand
   }
 
-  setCurCommand (value) {
+  setCurCommand(value) {
     this.curCommand = value
   }
 
-  getFilter () {
+  getFilter() {
     return this.filter
   }
 
-  setFilter (value) {
+  setFilter(value) {
     this.filter = value
   }
 
-  getFilterHidden () {
+  getFilterHidden() {
     return this.filterHidden
   }
 
-  setFilterHidden (value) {
+  setFilterHidden(value) {
     this.filterHidden = value
   }
 
@@ -822,7 +822,7 @@ class SvgCanvas {
    * @param {string} name - String with the new mode to change to
    * @returns {void}
    */
-  setMode (name) {
+  setMode(name) {
     this.pathActions.clear(true)
     this.textActions.clear()
     this.curProperties =
@@ -843,7 +843,7 @@ class SvgCanvas {
    * @fires module:svgcanvas.SvgCanvas#event:beforeClear|afterClear
    * @returns {void}
    */
-  clear () {
+  clear() {
     this.call('beforeClear')
     this.pathActions.clear()
     this.clearSelection()
@@ -862,7 +862,7 @@ class SvgCanvas {
     this.call('afterClear')
   }
 
-  async addExtension (name, extInitFunc, { importLocale }) {
+  async addExtension(name, extInitFunc, { importLocale }) {
     if (typeof extInitFunc !== 'function') {
       throw new TypeError(
         'Function argument expected for `svgcanvas.addExtension`'
@@ -871,8 +871,8 @@ class SvgCanvas {
     if (name in this.extensions) {
       throw new Error(
         'Cannot add extension "' +
-          name +
-          '", an extension by that name already exists.'
+        name +
+        '", an extension by that name already exists.'
       )
     }
     const argObj = {
@@ -890,11 +890,11 @@ class SvgCanvas {
     return this.call('extension_added', extObj)
   }
 
-  addCommandToHistory (cmd) {
+  addCommandToHistory(cmd) {
     this.undoMgr.addCommandToHistory(cmd)
   }
 
-  restoreRefElements (elem) {
+  restoreRefElements(elem) {
     // Look for missing reference elements, restore any found
     const attrs = {}
     refAttrs.forEach((item, _) => {
@@ -919,7 +919,7 @@ class SvgCanvas {
     }
   }
 
-  call (ev, arg) {
+  call(ev, arg) {
     if (this.events[ev]) {
       return this.events[ev](window, arg)
     }
@@ -933,7 +933,7 @@ class SvgCanvas {
    * @param {module:svgcanvas.EventHandler} f - The callback function to bind to the event
    * @returns {module:svgcanvas.EventHandler} The previous event
    */
-  bind (ev, f) {
+  bind(ev, f) {
     const old = this.events[ev]
     this.events[ev] = f
     return old
@@ -943,7 +943,7 @@ class SvgCanvas {
    * Flash the clipboard data momentarily on localStorage so all tabs can see.
    * @returns {void}
    */
-  flashStorage () {
+  flashStorage() {
     const data = sessionStorage.getItem(CLIPBOARD_ID)
     localStorage.setItem(CLIPBOARD_ID, data)
     setTimeout(() => {
@@ -958,7 +958,7 @@ class SvgCanvas {
    * @param {boolean} showGrips - Indicates whether the resize grips should be shown
    * @returns {void}
    */
-  selectOnly (elems, showGrips) {
+  selectOnly(elems, showGrips) {
     this.clearSelection(true)
     this.addToSelection(elems, showGrips)
   }
@@ -969,7 +969,7 @@ class SvgCanvas {
    * @param {Element[]} elemsToRemove - An array of elements to remove from selection
    * @returns {void}
    */
-  removeFromSelection (elemsToRemove) {
+  removeFromSelection(elemsToRemove) {
     if (!this.selectedElements[0]) {
       return
     }
@@ -1001,7 +1001,7 @@ class SvgCanvas {
    * @function module:svgcanvas.SvgCanvas#selectAllInCurrentLayer
    * @returns {void}
    */
-  selectAllInCurrentLayer () {
+  selectAllInCurrentLayer() {
     const currentLayer = this.getCurrentDrawing().getCurrentLayer()
     if (currentLayer) {
       this.currentMode = 'select'
@@ -1013,7 +1013,7 @@ class SvgCanvas {
     }
   }
 
-  getOpacity () {
+  getOpacity() {
     return this.curShape.opacity
   }
 
@@ -1021,7 +1021,7 @@ class SvgCanvas {
    * @function module:svgcanvas.SvgCanvas#getSnapToGrid
    * @returns {boolean} The current snap to grid setting
    */
-  getSnapToGrid () {
+  getSnapToGrid() {
     return this.curConfig.gridSnapping
   }
 
@@ -1029,7 +1029,7 @@ class SvgCanvas {
    * @function module:svgcanvas.SvgCanvas#getVersion
    * @returns {string} A string which describes the revision number of SvgCanvas.
    */
-  getVersion () {
+  getVersion() {
     return 'svgcanvas.js ($Rev$)'
   }
 
@@ -1039,7 +1039,7 @@ class SvgCanvas {
    * @param {module:path.uiStrings} strs - Object with strings (see the [locales API]{@link module:locale.LocaleStrings} and the [tutorial]{@tutorial LocaleDocs})
    * @returns {void}
    */
-  setUiStrings (strs) {
+  setUiStrings(strs) {
     Object.assign(this.uiStrings, strs.notification)
     pathModule.setUiStrings(strs)
   }
@@ -1050,7 +1050,7 @@ class SvgCanvas {
    * @param {module:SVGEditor.Config} opts - Object with options
    * @returns {void}
    */
-  setConfig (opts) {
+  setConfig(opts) {
     Object.assign(this.curConfig, opts)
   }
 
@@ -1058,22 +1058,22 @@ class SvgCanvas {
    * @function module:svgcanvas.SvgCanvas#getDocumentTitle
    * @returns {string|void} The current document title or an empty string if not found
    */
-  getDocumentTitle () {
+  getDocumentTitle() {
     return this.getTitle(this.svgContent)
   }
 
-  getOffset () {
+  getOffset() {
     return {
       x: Number(this.svgContent.getAttribute('x')),
       y: Number(this.svgContent.getAttribute('y'))
     }
   }
 
-  getColor (type) {
+  getColor(type) {
     return this.curProperties[type]
   }
 
-  setStrokePaint (paint) {
+  setStrokePaint(paint) {
     this.setPaint('stroke', paint)
   }
 
@@ -1082,7 +1082,7 @@ class SvgCanvas {
    * @param {module:jGraduate~Paint} paint
    * @returns {void}
    */
-  setFillPaint (paint) {
+  setFillPaint(paint) {
     this.setPaint('fill', paint)
   }
 
@@ -1090,7 +1090,7 @@ class SvgCanvas {
    * @function module:svgcanvas.SvgCanvas#getStrokeWidth
    * @returns {Float|string} The current stroke-width value
    */
-  getStrokeWidth () {
+  getStrokeWidth() {
     return this.curProperties.stroke_width
   }
 
@@ -1098,7 +1098,7 @@ class SvgCanvas {
    * @function module:svgcanvas.SvgCanvas#getStyle
    * @returns {module:svgcanvas.StyleOptions} current style options
    */
-  getStyle () {
+  getStyle() {
     return this.curShape
   }
 
@@ -1108,7 +1108,7 @@ class SvgCanvas {
    * @param {string} val
    * @returns {void}
    */
-  setOpacity (val) {
+  setOpacity(val) {
     this.curShape.opacity = val
     this.changeSelectedAttribute('opacity', val)
   }
@@ -1117,7 +1117,7 @@ class SvgCanvas {
    * @function module:svgcanvas.SvgCanvas#getFillOpacity
    * @returns {Float} the current fill opacity
    */
-  getFillOpacity () {
+  getFillOpacity() {
     return this.curShape.fill_opacity
   }
 
@@ -1125,7 +1125,7 @@ class SvgCanvas {
    * @function module:svgcanvas.SvgCanvas#getStrokeOpacity
    * @returns {string} the current stroke opacity
    */
-  getStrokeOpacity () {
+  getStrokeOpacity() {
     return this.curShape.stroke_opacity
   }
 
@@ -1137,7 +1137,7 @@ class SvgCanvas {
    * @param {boolean} preventUndo - Indicates whether or not this should be an undoable action
    * @returns {void}
    */
-  setPaintOpacity (type, val, preventUndo) {
+  setPaintOpacity(type, val, preventUndo) {
     this.curShape[type + '_opacity'] = val
     if (!preventUndo) {
       this.changeSelectedAttribute(type + '-opacity', val)
@@ -1152,7 +1152,7 @@ class SvgCanvas {
    * @param {"fill"|"stroke"} type - String with "fill" or "stroke"
    * @returns {Float} Fill/stroke opacity
    */
-  getPaintOpacity (type) {
+  getPaintOpacity(type) {
     return type === 'fill' ? this.getFillOpacity() : this.getStrokeOpacity()
   }
 
@@ -1162,7 +1162,7 @@ class SvgCanvas {
    * @param {Element} elem - The element to check the blur value for
    * @returns {string} stdDeviation blur attribute value
    */
-  getBlur (elem) {
+  getBlur(elem) {
     let val = 0
     if (elem) {
       const filterUrl = elem.getAttribute('filter')
@@ -1188,7 +1188,7 @@ class SvgCanvas {
    * @param {string} val
    * @returns {void}
    */
-  setGoodImage (val) {
+  setGoodImage(val) {
     this.lastGoodImgUrl = val
   }
 
@@ -1197,7 +1197,7 @@ class SvgCanvas {
    * @function module:svgcanvas.SvgCanvas#getSvgString
    * @returns {string} The current drawing as raw SVG XML text.
    */
-  getSvgString () {
+  getSvgString() {
     this.saveOptions.apply = false
     return this.svgCanvasToString()
   }
@@ -1212,7 +1212,7 @@ class SvgCanvas {
    * `svgCanvas.randomizeIds() <==> svgCanvas.randomizeIds(true)`
    * @returns {void}
    */
-  randomizeIds (enableRandomization) {
+  randomizeIds(enableRandomization) {
     if (arguments.length > 0 && enableRandomization === false) {
       draw.randomizeIds(false, this.getCurrentDrawing())
     } else {
@@ -1229,7 +1229,7 @@ class SvgCanvas {
    * @returns {void|DOMRect|false|SVGPathElement|null} If the getBBox flag is true, the resulting path's bounding box object.
    * Otherwise the resulting path element is returned.
    */
-  convertToPath (elem, getBBox) {
+  convertToPath(elem, getBBox) {
     // if elems not given, recursively call convertPath for all selected elements.
     if (!elem) {
       const elems = this.selectedElements
@@ -1270,12 +1270,12 @@ class SvgCanvas {
    * @function module:svgcanvas.SvgCanvas#cutSelectedElements
    * @returns {void}
    */
-  cutSelectedElements () {
+  cutSelectedElements() {
     this.copySelectedElements()
     this.deleteSelectedElements()
   }
 
-  initializeSvgCanvasMethods () {
+  initializeSvgCanvasMethods() {
     this.getJsonFromSvgElements = getJsonFromSvgElements
     this.addSVGElementsFromJson = addSVGElementsFromJson
     this.clearSvgContentElement = clearSvgContentElementInit
@@ -1341,7 +1341,7 @@ class SvgCanvas {
   /**
    * Creates modeChange event, adds it as an svgCanvas property
    * **/
-  modeChangeEvent () {
+  modeChangeEvent() {
     const modeEvent = new CustomEvent('modeChange', { detail: { getMode: () => this.getMode() } })
     this.modeEvent = modeEvent
   }
