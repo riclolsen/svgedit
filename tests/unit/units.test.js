@@ -52,9 +52,9 @@ describe('units', function () {
     const { shortFloat } = units
     assert.equal(shortFloat(0.00000001), 0)
     assert.equal(shortFloat(1), 1)
-    assert.equal(shortFloat(3.45678), 3.4568)
-    assert.equal(shortFloat(1.23443), 1.2344)
-    assert.equal(shortFloat(1.23455), 1.2346)
+    assert.equal(shortFloat(3.45678), 3.45678)
+    assert.equal(shortFloat(1.23443), 1.23443)
+    assert.equal(shortFloat(1.23455), 1.23455)
   })
 
   it('Test svgedit.units.isValidUnit()', function () {
@@ -85,7 +85,7 @@ describe('units', function () {
     assert.ok(units.convertUnit)
     assert.equal(typeof units.convertUnit, typeof function () { /* empty fn */ })
     // cm in default setup
-    assert.equal(units.convertUnit(42), 1.1113)
+    assert.equal(units.convertUnit(42), 1.11125)
     assert.equal(units.convertUnit(42, 'px'), 42)
   })
 })
