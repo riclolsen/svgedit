@@ -315,14 +315,22 @@ const svgToString = (elem, indent) => {
 
       for (let i = 0; i < childs.length; i++) {
         const child = childs.item(i)
+        // Don't add newlines/spaces around text tags
+        const localName = elem.localName ? elem.localName.toLowerCase() : elem.nodeName.toLowerCase()
+        const isTextTag = ['text', 'tspan', 'textpath', 'tref', 'altglyph', 'a'].includes(localName)
         switch (child.nodeType) {
           case 1: // element node
-            out.push('\n')
-            out.push(svgCanvas.svgToString(child, indent))
+            if (!isTextTag) out.push('\n')
+            out.push(svgCanvas.svgToString(child, isTextTag ? 0 : indent))
             break
           case 3: {
             // text node
-            const str = child.nodeValue.replace(/^\s+|\s+$/g, '')
+            // If xml:space="preserve" is NOT set, we strip whitespace
+            const isPreserve = elem.getAttribute('xml:space') === 'preserve'
+            let str = child.nodeValue
+            if (!isPreserve) {
+              str = str.replace(/^\s+|\s+$/g, '')
+            }
             if (str !== '') {
               bOneLine = true
               out.push(String(toXml(str)))
@@ -346,7 +354,9 @@ const svgToString = (elem, indent) => {
         } // switch on node type
       }
       indent -= 2
-      if (!bOneLine) {
+      const localName = elem.localName ? elem.localName.toLowerCase() : elem.nodeName.toLowerCase()
+      const isTextTag = ['text', 'tspan', 'textpath', 'tref', 'altglyph', 'a'].includes(localName)
+      if (!bOneLine && !isTextTag) {
         out.push('\n')
         for (let i = 0; i < indent; i++) {
           out.push(' ')
