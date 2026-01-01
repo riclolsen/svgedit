@@ -11,7 +11,7 @@ test.describe('SVG core path extras', () => {
       const { pathModule, units } = window.svgHarness
       // Ensure unit helpers are initialized so shortFloat can round numbers.
       units.init({
-        getRoundDigits: () => 3,
+        getRoundDigits: () => 6,
         getBaseUnit: () => 'px',
         getElement: () => null,
         getHeight: () => 100,

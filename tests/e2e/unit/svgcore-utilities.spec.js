@@ -17,7 +17,7 @@ test.describe('SVG core utilities', () => {
       rect.setAttribute('height', '40')
       svg.append(rect)
       units.init({
-        getRoundDigits: () => 2,
+        getRoundDigits: () => 6,
         getBaseUnit: () => 'cm'
       })
       units.convertAttrs(rect)
@@ -42,7 +42,7 @@ test.describe('SVG core utilities', () => {
       svg.setAttribute('height', '200')
       document.body.append(svg)
       units.init({
-        getRoundDigits: () => 2,
+        getRoundDigits: () => 6,
         getBaseUnit: () => 'px'
       })
       const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
@@ -59,7 +59,7 @@ test.describe('SVG core utilities', () => {
         svg.append(el)
         return el
       }
-      const res = utilities.getStrokedBBox([rect], addSvg, { resetOrientation: () => {} })
+      const res = utilities.getStrokedBBox([rect], addSvg, { resetOrientation: () => { } })
       return { x: res.x, y: res.y, width: res.width, height: res.height }
     })
     expect(Number.isFinite(bbox.x)).toBe(true)
@@ -131,7 +131,7 @@ test.describe('SVG core utilities', () => {
         svg.append(el)
         return el
       }
-      const pathActions = { resetOrientation: () => {} }
+      const pathActions = { resetOrientation: () => { } }
       const path = create('path', { id: 'p', d: 'M0,1 Z' })
       const rect = create('rect', { id: 'r', x: '0', y: '1', width: '5', height: '10' })
       const line = create('line', { id: 'l', x1: '0', y1: '1', x2: '5', y2: '6' })

@@ -31,11 +31,11 @@ describe('units', function () {
       * @implements {module:units.ElementContainer}
       */
       {
-        getBaseUnit () { return 'cm' },
-        getHeight () { return 600 },
-        getWidth () { return 800 },
-        getRoundDigits () { return 4 },
-        getElement (elementId) { return document.getElementById(elementId) }
+        getBaseUnit() { return 'cm' },
+        getHeight() { return 600 },
+        getWidth() { return 800 },
+        getRoundDigits() { return 6 },
+        getElement(elementId) { return document.getElementById(elementId) }
       }
     )
   })

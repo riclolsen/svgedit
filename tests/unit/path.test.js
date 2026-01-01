@@ -17,7 +17,7 @@ describe('path', function () {
   * @param {SVGSVGElement} [svg]
   * @returns {EditorContexts}
   */
-  function getMockContexts (svg) {
+  function getMockContexts(svg) {
     svg = svg || document.createElementNS(NS.SVG, 'svg')
     const selectorParentGroup = document.createElementNS(NS.SVG, 'g')
     selectorParentGroup.setAttribute('id', 'selectorParentGroup')
@@ -27,16 +27,16 @@ describe('path', function () {
       * @implements {module:path.EditorContext}
       */
       {
-        getSvgRoot () { return svg },
-        getZoom () { return 1 }
+        getSvgRoot() { return svg },
+        getZoom() { return 1 }
       },
       /**
       * @implements {module:utilities.EditorContext}
       */
       {
-        getDOMDocument () { return svg },
-        getDOMContainer () { return svg },
-        getSvgRoot () { return svg }
+        getDOMDocument() { return svg },
+        getDOMContainer() { return svg },
+        getSvgRoot() { return svg }
       }
     ]
   }
@@ -167,7 +167,7 @@ describe('path', function () {
 
   it('Test svgedit.path.convertPath', function () {
     unitsInit({
-      getRoundDigits () { return 5 }
+      getRoundDigits() { return 6 }
     })
 
     const path = document.createElementNS(NS.SVG, 'path')

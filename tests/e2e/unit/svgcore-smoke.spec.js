@@ -42,7 +42,7 @@ test.describe('SVG core smoke', () => {
     const d = await page.evaluate(() => {
       const { pathModule, units } = window.svgHarness
       units.init({
-        getRoundDigits: () => 2,
+        getRoundDigits: () => 6,
         getBaseUnit: () => 'px'
       })
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
@@ -74,7 +74,7 @@ test.describe('SVG core smoke', () => {
           svg.append(el)
           return el
         },
-        { resetOrientation: () => {} }
+        { resetOrientation: () => { } }
       )
       return { x: res.x, y: res.y, width: res.width, height: res.height }
     })

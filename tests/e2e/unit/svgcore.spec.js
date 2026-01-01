@@ -10,7 +10,7 @@ test.describe('SVG core modules in browser', () => {
     const result = await page.evaluate(async () => {
       const { units } = window.svgHarness
       units.init({
-        getRoundDigits: () => 2,
+        getRoundDigits: () => 6,
         getBaseUnit: () => 'px'
       })
       return {
@@ -36,7 +36,7 @@ test.describe('SVG core modules in browser', () => {
         getBaseUnit: () => 'cm',
         getHeight: () => 600,
         getWidth: () => 800,
-        getRoundDigits: () => 4,
+        getRoundDigits: () => 6,
         getElement: (id) => document.getElementById(id)
       })
       return {
@@ -109,7 +109,7 @@ test.describe('SVG core modules in browser', () => {
         svg.append(el)
         return el
       }
-      const pathActions = { resetOrientation: () => {} }
+      const pathActions = { resetOrientation: () => { } }
       const res = utilities.getBBoxOfElementAsPath(rect, addSvg, pathActions)
       return { x: res.x, y: res.y, width: res.width, height: res.height }
     })
@@ -123,7 +123,7 @@ test.describe('SVG core modules in browser', () => {
     const dRel = await page.evaluate(() => {
       const { pathModule, units } = window.svgHarness
       units.init({
-        getRoundDigits: () => 2,
+        getRoundDigits: () => 6,
         getBaseUnit: () => 'px'
       })
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
@@ -141,7 +141,7 @@ test.describe('SVG core modules in browser', () => {
     const result = await page.evaluate(() => {
       const { pathModule, units } = window.svgHarness
       units.init({
-        getRoundDigits: () => 5,
+        getRoundDigits: () => 6,
         getBaseUnit: () => 'px'
       })
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')

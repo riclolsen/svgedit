@@ -34,7 +34,7 @@ const loadExtensionTranslation = async function (svgEditor) {
 
 export default {
   name,
-  async init (_S) {
+  async init(_S) {
     const svgEditor = this
     const { svgCanvas } = svgEditor
     const { $id, $click } = svgCanvas
@@ -214,7 +214,7 @@ export default {
         // In the future, more options can be provided here
         const saveOpts = {
           images: svgEditor.configObj.pref('img_save'),
-          round_digits: 2
+          round_digits: 6
         }
         // remove the selected outline before serializing
         svgCanvas.clearSelection()
@@ -260,7 +260,7 @@ export default {
     return {
       name: svgEditor.i18next.t(`${name}:name`),
       // The callback should be used to load the DOM with the appropriate UI items
-      callback () {
+      callback() {
         const buttonTemplate = `
         <se-menu-item id="tool_clear" label="opensave.new_doc" shortcut="N" src="new.svg"></se-menu-item>`
         svgCanvas.insertChildAtIndex($id('main_button'), buttonTemplate, 0)

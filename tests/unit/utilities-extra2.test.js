@@ -26,7 +26,7 @@ describe('utilities extra coverage', () => {
       getBaseUnit: () => 'px',
       getWidth: () => 200,
       getHeight: () => 100,
-      getRoundDigits: () => 2
+      getRoundDigits: () => 6
     })
     initUtilities({
       getSvgRoot: () => svg,
