@@ -132,7 +132,7 @@ export const toXml = str => {
  * @param {string} input
  * @returns {string} Base64 output
  */
-export function encode64 (input) {
+export function encode64(input) {
   // base64 strings are 4/3 larger than the original string
   input = encodeUTF8(input) // convert non-ASCII characters
   return window.btoa(input) // Use native if available
@@ -144,7 +144,7 @@ export function encode64 (input) {
  * @param {string} input Base64-encoded input
  * @returns {string} Decoded output
  */
-export function decode64 (input) {
+export function decode64(input) {
   return decodeUTF8(window.atob(input))
 }
 
@@ -153,7 +153,7 @@ export function decode64 (input) {
  * @param word : the string, we want to compute the hashcode
  * @returns {number}: Hascode of the given string
  */
-export function hashCode (word) {
+export function hashCode(word) {
   let hash = 0
   let chr
   if (word.length === 0) return hash
@@ -170,7 +170,7 @@ export function hashCode (word) {
  * @param {string} argString
  * @returns {string}
  */
-export function decodeUTF8 (argString) {
+export function decodeUTF8(argString) {
   return decodeURIComponent(escape(argString))
 }
 
@@ -251,10 +251,10 @@ export const blankPageObjectURL = (() => {
  */
 export const convertToXMLReferences = input => {
   let output = ''
-  ;[...input].forEach(ch => {
-    const c = ch.charCodeAt()
-    output += c <= 127 ? ch : `&#${c};`
-  })
+    ;[...input].forEach(ch => {
+      const c = ch.charCodeAt()
+      output += c <= 127 ? ch : `&#${c};`
+    })
   return output
 }
 
@@ -391,6 +391,7 @@ export let getHref = function (elem) {
  * @returns {void}
  */
 export let setHref = function (elem, val) {
+  elem.setAttributeNS(NS.XLINK, 'xlink:href', val)
   elem.setAttribute('href', val)
 }
 
@@ -764,16 +765,16 @@ export const getPathDFromElement = function (elem) {
  */
 export const getExtraAttributesForConvertToPath = function (elem) {
   const attrs = {}
-  // TODO: make this list global so that we can properly maintain it
-  // TODO: what about @transform, @clip-rule, @fill-rule, etc?
-  ;['marker-start', 'marker-end', 'marker-mid', 'filter', 'clip-path'].forEach(
-    function (item) {
-      const a = elem.getAttribute(item)
-      if (a) {
-        attrs[item] = a
+    // TODO: make this list global so that we can properly maintain it
+    // TODO: what about @transform, @clip-rule, @fill-rule, etc?
+    ;['marker-start', 'marker-end', 'marker-mid', 'filter', 'clip-path'].forEach(
+      function (item) {
+        const a = elem.getAttribute(item)
+        if (a) {
+          attrs[item] = a
+        }
       }
-    }
-  )
+    )
   return attrs
 }
 
@@ -936,7 +937,7 @@ export const convertToPath = (elem, attrs, svgCanvas) => {
  * @param {boolean} hasAMatrixTransform - True if there is a matrix transform
  * @returns {boolean} True if the bbox can be optimized.
  */
-function bBoxCanBeOptimizedOverNativeGetBBox (angle, hasAMatrixTransform) {
+function bBoxCanBeOptimizedOverNativeGetBBox(angle, hasAMatrixTransform) {
   const angleModulo90 = angle % 90
   const closeTo90 = angleModulo90 < -89.99 || angleModulo90 > 89.99
   const closeTo0 = angleModulo90 > -0.001 && angleModulo90 < 0.001

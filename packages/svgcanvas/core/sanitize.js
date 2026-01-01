@@ -234,9 +234,8 @@ export const sanitizeSvg = (node) => {
 
     // If legacy xlink:href is present but href is missing, mirror it to href for modern browsers
     const xlinkHref = node.getAttributeNS(NS.XLINK, 'href')
-    if (xlinkHref) {
+    if (xlinkHref && !node.hasAttribute('href')) {
       node.setAttribute('href', xlinkHref)
-      node.removeAttributeNS(NS.XLINK, 'href')
     }
 
     Object.values(seAttrs).forEach(([att, val, ns]) => {
