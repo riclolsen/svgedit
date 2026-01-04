@@ -10,10 +10,10 @@ const outDir = resolve(root, 'dist/editor/extensions')
 
 const htmlStringPlugin = string({
   include: [
-    'src/editor/dialogs/**/*.html',
-    'src/editor/panels/*.html',
-    'src/editor/templates/*.html',
-    'src/editor/extensions/*/*.html'
+    '**/src/editor/dialogs/**/*.html',
+    '**/src/editor/panels/*.html',
+    '**/src/editor/templates/*.html',
+    '**/src/editor/extensions/*/*.html'
   ]
 })
 htmlStringPlugin.enforce = 'post'

@@ -13,10 +13,10 @@ const editorEntries = [
 const coverageEnabled = process.env.COVERAGE === 'true' || process.env.NODE_ENV === 'test'
 const htmlStringPlugin = string({
   include: [
-    'src/editor/dialogs/**/*.html',
-    'src/editor/panels/*.html',
-    'src/editor/templates/*.html',
-    'src/editor/extensions/*/*.html'
+    '**/src/editor/dialogs/**/*.html',
+    '**/src/editor/panels/*.html',
+    '**/src/editor/templates/*.html',
+    '**/src/editor/extensions/*/*.html'
   ]
 })
 htmlStringPlugin.enforce = 'post'
