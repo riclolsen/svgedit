@@ -293,9 +293,21 @@ export class ScadaUI {
                                         }
 
                                         picker.oninput = (e) => {
-                                            txt.value = e.target.value;
+                                            const color = e.target.value;
+                                            const pipeIndex = txt.value.lastIndexOf('|');
+                                            if (pipeIndex !== -1) {
+                                                // Replace everything after the last pipe
+                                                txt.value = txt.value.substring(0, pipeIndex + 1) + color;
+                                            } else {
+                                                // Replace all contents
+                                                txt.value = color;
+                                            }
                                             // Trigger change manually
                                             txt.dispatchEvent(new Event('change'));
+                                        };
+
+                                        picker.onchange = () => {
+                                            txt.focus();
                                         };
 
                                         txt.onchange = (e) => {
