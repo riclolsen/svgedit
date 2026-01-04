@@ -33,8 +33,10 @@ export const clearSvgContentElementInit = () => {
   el.setAttribute('y', dimensions[1])
   el.setAttribute('overflow', curConfig.show_outside_canvas ? 'visible' : 'hidden')
   el.setAttribute('xmlns', NS.SVG)
-  el.setAttribute('xmlns:se', NS.SE)
-  el.setAttribute('xmlns:xlink', NS.XLINK)
+  el.setAttributeNS(NS.XMLNS, 'xmlns:se', NS.SE)
+  el.setAttributeNS(NS.XMLNS, 'xmlns:xlink', NS.XLINK)
+  el.setAttributeNS(NS.XMLNS, 'xmlns:inkscape', NS.INKSCAPE)
+  el.setAttributeNS(NS.XMLNS, 'xmlns:sodipodi', NS.SODIPODI)
   pel.appendChild(el)
 
   // TODO: make this string optional and set by the client
