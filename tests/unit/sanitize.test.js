@@ -14,4 +14,16 @@ describe('sanitize', function () {
     assert.equal(rect.getAttribute('stroke'), 'blue')
     assert.equal(rect.getAttribute('stroke-width'), '40')
   })
+
+  it('Test sanitizeSvg() does not remove <namedview>', function () {
+    const namedview = document.createElementNS(NS.SVG, 'namedview')
+    namedview.setAttribute('id', 'base')
+    namedview.setAttribute('pagecolor', '#ffffff')
+    svg.append(namedview)
+    sanitize.sanitizeSvg(namedview)
+
+    assert.ok(svg.querySelector('namedview'))
+    assert.equal(namedview.getAttribute('id'), 'base')
+    assert.equal(namedview.getAttribute('pagecolor'), '#ffffff')
+  })
 })
