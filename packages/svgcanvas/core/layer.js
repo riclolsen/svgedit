@@ -40,6 +40,13 @@ class Layer {
       const layerTitle = svgdoc.createElementNS(NS.SVG, 'title')
       layerTitle.textContent = name
       this.group_.append(layerTitle)
+
+      const root = svgElem.closest('svg')
+      if (root && root.getAttribute('xmlns:inkscape') === NS.INKSCAPE) {
+        this.group_.setAttributeNS(NS.INKSCAPE, 'inkscape:groupmode', 'layer')
+        this.group_.setAttributeNS(NS.INKSCAPE, 'inkscape:label', name)
+      }
+
       if (group) {
         group.insertAdjacentElement('afterend', this.group_)
       } else {
@@ -172,6 +179,16 @@ class Layer {
       while (title.firstChild) { title.removeChild(title.firstChild) }
       title.textContent = name
       this.name_ = name
+
+      const root = this.group_.closest('svg')
+      if (root && root.getAttribute('xmlns:inkscape') === NS.INKSCAPE) {
+        const previousLabel = this.group_.getAttributeNS(NS.INKSCAPE, 'label')
+        this.group_.setAttributeNS(NS.INKSCAPE, 'inkscape:label', name)
+        if (hrService) {
+          hrService.changeElement(this.group_, { 'inkscape:label': previousLabel })
+        }
+      }
+
       if (hrService) {
         hrService.changeElement(title, { '#text': previousName })
       }
