@@ -376,7 +376,14 @@ const groupSvgElem = (elem) => {
  * @returns {void}
  */
 const prepareSvg = (newDoc) => {
-  svgCanvas.sanitizeSvg(newDoc.documentElement)
+  const root = newDoc.documentElement
+  if (!root.getAttribute('xmlns:inkscape')) {
+    root.setAttributeNS(NS.XMLNS, 'xmlns:inkscape', NS.INKSCAPE)
+  }
+  if (!root.getAttribute('xmlns:sodipodi')) {
+    root.setAttributeNS(NS.XMLNS, 'xmlns:sodipodi', NS.SODIPODI)
+  }
+  svgCanvas.sanitizeSvg(root)
 
   // convert paths into absolute commands
   const paths = [...newDoc.getElementsByTagNameNS(NS.SVG, 'path')]
