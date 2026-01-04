@@ -792,4 +792,24 @@ describe('draw.Drawing', function () {
     drawing = new draw.Drawing(svgN.cloneNode(true))
     assert.ok(!drawing.getNonce())
   })
+
+  it('Test identifyLayers() with Inkscape layers', function () {
+    const drawing = new draw.Drawing(svg)
+
+    const inkscapeLayer = document.createElementNS(NS.SVG, 'g')
+    inkscapeLayer.setAttributeNS(NS.INKSCAPE, 'inkscape:groupmode', 'layer')
+    inkscapeLayer.setAttributeNS(NS.INKSCAPE, 'inkscape:label', 'Inkscape Layer')
+    inkscapeLayer.setAttribute('id', 'layer1')
+    svg.append(inkscapeLayer)
+
+    drawing.identifyLayers()
+
+    assert.equal(drawing.getNumLayers(), 1)
+    assert.equal(drawing.getLayerName(0), 'Inkscape Layer')
+    assert.equal(inkscapeLayer.getAttribute('class'), LAYER_CLASS)
+    assert.ok(inkscapeLayer.querySelector('title'))
+    assert.equal(inkscapeLayer.querySelector('title').textContent, 'Inkscape Layer')
+
+    cleanupSVG(svg)
+  })
 })

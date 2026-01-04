@@ -13,7 +13,7 @@ export const parseXSAC = (label) => {
     // Try wrapping in brackets to handle multiple comma-separated objects
     // This handles both single object "{...}" and multiple "{...},{...}"
     const wrapped = `[${label}]`;
-    console.log('SCADA: wrapping label', wrapped);
+    // console.log('SCADA: wrapping label', wrapped);
     return JSON.parse(wrapped);
   } catch (e) {
     console.warn("SCADA: Failed to parse XSAC label via JSON wrapper:", e);
