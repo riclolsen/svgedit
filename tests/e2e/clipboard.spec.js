@@ -37,6 +37,43 @@ test.describe('Clipboard', () => {
     await expect(page.locator('#testCircle')).toBeVisible()
   })
 
+  test('duplicates an object from the context menu as an independent copy', async ({ page }) => {
+    await page.locator('#testCircle').click({ button: 'right' })
+    await page.locator('#cmenu_canvas a[href="#duplicate"]').click()
+    const duplicate = page.locator('#svgcontent circle:not(#testCircle)')
+    await expect(duplicate).toHaveCount(1)
+    await expect(duplicate).toHaveAttribute('cx', '120')
+    await expect(duplicate).toHaveAttribute('cy', '120')
+    await expect(page.locator('#svgcontent use')).toHaveCount(0)
+    await page.locator('#tool_undo').click()
+    await expect(duplicate).toHaveCount(0)
+    await page.locator('#tool_redo').click()
+    await expect(duplicate).toHaveCount(1)
+  })
+
+  test('creates a linked clone from the context menu with undo and redo', async ({ page }) => {
+    await page.locator('#testCircle').click({ button: 'right' })
+    await page.locator('#cmenu_canvas a[href="#clone"]').click()
+    const clone = page.locator('#svgcontent use')
+    await expect(clone).toHaveCount(1)
+    await expect(clone).toBeVisible()
+    expect(await clone.evaluate(el => window.svgEditor.svgCanvas.getHref(el))).toBe('#testCircle')
+    await expect(page.locator('#svgcontent circle')).toHaveCount(1)
+    await page.evaluate(() => document.getElementById('testCircle').setAttribute('r', '30'))
+    expect(await clone.evaluate(el => el.getBBox().width)).toBe(60)
+    await page.locator('#tool_undo').click()
+    await expect(clone).toHaveCount(0)
+    await page.locator('#tool_redo').click()
+    await expect(clone).toHaveCount(1)
+  })
+
+  test('disables duplication and cloning without a selection', async ({ page }) => {
+    await clickCanvas(page, { x: 300, y: 300 })
+    await page.locator('#svgroot').click({ position: { x: 300, y: 300 }, button: 'right' })
+    await expect(page.locator('#cmenu_canvas a[href="#duplicate"]').locator('..')).toHaveClass(/disabled/)
+    await expect(page.locator('#cmenu_canvas a[href="#clone"]').locator('..')).toHaveClass(/disabled/)
+  })
+
   test('copy, paste, cut and delete shapes', async ({ page }) => {
     await page.locator('#testCircle').click({ button: 'right' })
     await page.locator('#cmenu_canvas a[href="#copy"]').click()

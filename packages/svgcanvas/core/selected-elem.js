@@ -62,6 +62,7 @@ export const init = canvas => {
   svgCanvas.moveUpDownSelected = moveUpDownSelected // Moves the select element up or down the stack, based on the visibly
   svgCanvas.moveSelectedElements = moveSelectedElements // Moves selected elements on the X/Y axis.
   svgCanvas.cloneSelectedElements = cloneSelectedElements // Create deep DOM copies (clones) of all selected elements and move them slightly
+  svgCanvas.createUseSelectedElements = createUseSelectedElements
   svgCanvas.alignSelectedElements = alignSelectedElements // Aligns selected elements.
   svgCanvas.updateCanvas = updateCanvas // Updates the editor canvas width/height/position after a zoom has occurred.
   svgCanvas.cycleElement = cycleElement // Select the next/previous element within the current layer.
@@ -341,6 +342,45 @@ const cloneSelectedElements = (x, y) => {
     svgCanvas.addCommandToHistory(batchCmd)
   }
 }
+/**
+ * Create linked SVG uses of selected elements, offset in their parent's coordinates.
+ * @function module:selected-elem.SvgCanvas#createUseSelectedElements
+ * @param {Float} x Distance to move on the x-axis
+ * @param {Float} y Distance to move on the y-axis
+ * @returns {void}
+ */
+const createUseSelectedElements = (x = 20, y = 20) => {
+  const originals = svgCanvas.getSelectedElements().filter(elem => elem?.parentNode)
+  if (!originals.length) return
+
+  // Keep the original stacking order when creating multiple linked copies.
+  originals.sort((a, b) => {
+    if (a === b) return 0
+    return a.compareDocumentPosition(b) & 4 ? -1 : 1
+  })
+  const batchCmd = new BatchCommand('Create Clones')
+  const clones = originals.map(elem => {
+    if (!elem.id) {
+      const oldId = elem.getAttribute('id')
+      elem.id = svgCanvas.getNextId()
+      batchCmd.addSubCommand(new ChangeElementCommand(elem, { id: oldId }))
+    }
+    const use = svgCanvas.getDOMDocument().createElementNS(NS.SVG, 'use')
+    use.id = svgCanvas.getNextId()
+    setHref(use, '#' + elem.id)
+    // The referenced element supplies its own transform and presentation attributes.
+    use.setAttribute('transform', `translate(${x},${y})`)
+    elem.parentNode.append(use)
+    svgCanvas.getDataStorage().put(use, 'ref', elem)
+    batchCmd.addSubCommand(new InsertElementCommand(use))
+    return use
+  })
+  svgCanvas.clearSelection(true)
+  svgCanvas.addToSelection(clones.reverse())
+  svgCanvas.addCommandToHistory(batchCmd)
+  svgCanvas.call('changed', clones)
+}
+
 /**
  * Aligns selected elements.
  * @function module:selected-elem.SvgCanvas#alignSelectedElements

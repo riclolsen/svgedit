@@ -444,7 +444,7 @@ class TopPanel {
     } else {
       menuItems.setAttribute(
         'disablemenuitems',
-        '#delete,#cut,#copy,#group,#ungroup,#move_front,#move_up,#move_down,#move_back'
+        '#delete,#cut,#copy,#duplicate,#clone,#group,#ungroup,#move_front,#move_up,#move_down,#move_back'
       )
     }
 
@@ -466,7 +466,7 @@ class TopPanel {
       const canCMenu = document.getElementById('se-cmenu_canvas')
       canCMenu.setAttribute(
         'enablemenuitems',
-        '#delete,#cut,#copy,#move_front,#move_up,#move_down,#move_back'
+        '#delete,#cut,#copy,#duplicate,#clone,#move_front,#move_up,#move_down,#move_back'
       )
     } else {
       $id('selLayerNames').setAttribute('disabled', 'disabled')

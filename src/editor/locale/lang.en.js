@@ -162,6 +162,7 @@ export default {
     tool_source: 'Edit Source',
     wireframe_mode: 'Wireframe Mode',
     clone: 'Duplicate Element(s)',
+    create_clone: 'Create Clone (<use>)',
     del: 'Delete Element(s)',
     group_elements: 'Group Elements',
     make_link: 'Make (hyper)link',

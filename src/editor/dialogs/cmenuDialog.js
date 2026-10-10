@@ -17,6 +17,8 @@ export class SeCMenuDialog extends HTMLElement {
     this._workarea = document.getElementById('workarea')
     this.$dialog = this._shadowRoot.querySelector('#cmenu_canvas')
     this.$copyLink = this._shadowRoot.querySelector('#se-copy')
+    this.$duplicateLink = this._shadowRoot.querySelector('#se-duplicate')
+    this.$cloneLink = this._shadowRoot.querySelector('#se-clone')
     this.$cutLink = this._shadowRoot.querySelector('#se-cut')
     this.$pasteLink = this._shadowRoot.querySelector('#se-paste')
     this.$pasteInPlaceLink = this._shadowRoot.querySelector('#se-paste-in-place')
@@ -37,6 +39,8 @@ export class SeCMenuDialog extends HTMLElement {
   init (i18next) {
     this.setAttribute('tools-cut', i18next.t('tools.cut'))
     this.setAttribute('tools-copy', i18next.t('tools.copy'))
+    this.setAttribute('tools-duplicate', i18next.t('tools.clone'))
+    this.setAttribute('tools-create_clone', i18next.t('tools.create_clone', { defaultValue: 'Create Clone (<use>)' }))
     this.setAttribute('tools-paste', i18next.t('tools.paste'))
     this.setAttribute('tools-paste_in_place', i18next.t('tools.paste_in_place'))
     this.setAttribute('tools-delete', i18next.t('tools.delete'))
@@ -54,7 +58,7 @@ export class SeCMenuDialog extends HTMLElement {
    */
   static get observedAttributes () {
     return ['disableallmenu', 'enablemenuitems', 'disablemenuitems', 'tools-cut',
-      'tools-copy', 'tools-paste', 'tools-paste_in_place', 'tools-delete', 'tools-group',
+      'tools-copy', 'tools-duplicate', 'tools-create_clone', 'tools-paste', 'tools-paste_in_place', 'tools-delete', 'tools-group',
       'tools-ungroup', 'tools-move_front', 'tools-move_up', 'tools-move_down',
       'tools-move_back']
   }
@@ -103,6 +107,13 @@ export class SeCMenuDialog extends HTMLElement {
         break
       case 'tools-paste':
         this.$pasteLink.textContent = newValue
+        break
+      case 'tools-duplicate':
+        textnode = document.createTextNode(newValue)
+        this.$duplicateLink.prepend(textnode)
+        break
+      case 'tools-create_clone':
+        this.$cloneLink.textContent = newValue
         break
       case 'tools-paste_in_place':
         this.$pasteInPlaceLink.textContent = newValue
@@ -202,7 +213,7 @@ export class SeCMenuDialog extends HTMLElement {
       let y = e.pageY
 
       const xOff = screen.width - 250 // menu width
-      const yOff = screen.height - (276 + 150) // menu height + bottom panel height and scroll bar
+      const yOff = screen.height - (316 + 150) // menu height + bottom panel height and scroll bar
 
       if (x > xOff) {
         x = xOff
@@ -231,6 +242,8 @@ export class SeCMenuDialog extends HTMLElement {
     this._workarea.addEventListener('mousedown', onMenuCloseHandler)
     svgEditor.$click(this.$cutLink, (evt) => onMenuClickHandler(evt, 'cut'))
     svgEditor.$click(this.$copyLink, (evt) => onMenuClickHandler(evt, 'copy'))
+    svgEditor.$click(this.$duplicateLink, (evt) => onMenuClickHandler(evt, 'duplicate'))
+    svgEditor.$click(this.$cloneLink, (evt) => onMenuClickHandler(evt, 'clone'))
     svgEditor.$click(this.$pasteLink, (evt) => onMenuClickHandler(evt, 'paste'))
     svgEditor.$click(this.$pasteInPlaceLink, (evt) => onMenuClickHandler(evt, 'paste_in_place'))
     svgEditor.$click(this.$deleteLink, (evt) => onMenuClickHandler(evt, 'delete'))

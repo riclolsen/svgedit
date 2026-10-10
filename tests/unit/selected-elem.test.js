@@ -54,6 +54,65 @@ describe('selected-elem', () => {
     localStorage.clear()
   })
 
+  it('creates linked uses in stacking order with a single undo step', () => {
+    const first = svgCanvas.addSVGElementsFromJson({
+      element: 'rect',
+      attr: { id: 'clone-source', x: 10, y: 20, width: 30, height: 40, transform: 'rotate(30)' }
+    })
+    const second = svgCanvas.addSVGElementsFromJson({
+      element: 'circle',
+      attr: { id: 'clone-circle', cx: 80, cy: 80, r: 10 }
+    })
+    svgCanvas.selectOnly([second, first], true)
+    const undoSize = svgCanvas.undoMgr.getUndoStackSize()
+    let changed
+    svgCanvas.bind('changed', (window, elems) => { changed = elems })
+
+    svgCanvas.createUseSelectedElements(20, 20)
+
+    const uses = Array.from(first.parentNode.querySelectorAll('use'))
+    expect(uses).toHaveLength(2)
+    expect(uses.map(use => svgCanvas.getHref(use))).toEqual(['#clone-source', '#clone-circle'])
+    expect(new Set([first.id, second.id, ...uses.map(use => use.id)]).size).toBe(4)
+    expect(uses[0].getAttribute('transform')).toBe('translate(20,20)')
+    expect(svgCanvas.getDataStorage().get(uses[0], 'ref')).toBe(first)
+    expect(svgCanvas.getSelectedElements().filter(Boolean)).toEqual(uses.toReversed())
+    expect(changed).toEqual(uses.toReversed())
+    expect(svgCanvas.undoMgr.getUndoStackSize()).toBe(undoSize + 1)
+
+    svgCanvas.undoMgr.undo()
+    expect(first.parentNode.querySelectorAll('use')).toHaveLength(0)
+    expect(first.isConnected).toBe(true)
+    expect(second.isConnected).toBe(true)
+    svgCanvas.undoMgr.redo()
+    expect(first.parentNode.querySelectorAll('use')).toHaveLength(2)
+    expect(svgCanvas.getHref(uses[0])).toBe('#clone-source')
+  })
+
+  it('assigns an undoable reference id and ignores empty selections', () => {
+    const rect = svgCanvas.addSVGElementsFromJson({
+      element: 'rect', attr: { x: 0, y: 0, width: 20, height: 20 }
+    })
+    rect.removeAttribute('id')
+    svgCanvas.selectOnly([rect], true)
+    svgCanvas.createUseSelectedElements()
+    const id = rect.id
+    const use = rect.parentNode.querySelector('use')
+    expect(id).toBeTruthy()
+    expect(svgCanvas.getHref(use)).toBe('#' + id)
+    svgCanvas.undoMgr.undo()
+    expect(rect.hasAttribute('id')).toBe(false)
+    expect(use.isConnected).toBe(false)
+    svgCanvas.undoMgr.redo()
+    expect(rect.id).toBe(id)
+    expect(use.isConnected).toBe(true)
+
+    svgCanvas.clearSelection()
+    const undoSize = svgCanvas.undoMgr.getUndoStackSize()
+    svgCanvas.createUseSelectedElements()
+    expect(svgCanvas.undoMgr.getUndoStackSize()).toBe(undoSize)
+  })
+
   it('copies selection without requiring context menu DOM', () => {
     let clipboardChanges = 0
     svgCanvas.bind('clipboardChanged', () => {

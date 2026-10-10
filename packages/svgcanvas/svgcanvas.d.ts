@@ -133,6 +133,7 @@ export default class SvgCanvas {
   setSvgString(xmlString: string, preventUndo?: boolean): boolean
   clearSelection(noCall?: boolean): void
   selectOnly(elements: Element[], showGrips?: boolean): void
+  createUseSelectedElements(x?: number, y?: number): void
   getResolution(): Resolution
   setResolution(width: number | string, height: number | string): boolean
   getZoom(): number

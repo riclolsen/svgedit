@@ -522,6 +522,12 @@ class EditorStartup {
         case 'copy':
           this.copySelected()
           break
+        case 'duplicate':
+          this.svgCanvas.cloneSelectedElements(20, 20)
+          break
+        case 'clone':
+          this.svgCanvas.createUseSelectedElements(20, 20)
+          break
         case 'paste':
           this.svgCanvas.pasteElements()
           break
