@@ -9,6 +9,7 @@
 import { NS } from './namespaces.js'
 import * as hstry from './history.js'
 import * as pathModule from './path.js'
+import { warn, error } from '../common/logger.js'
 import {
   getStrokedBBoxDefaultVisible,
   setHref,
@@ -27,11 +28,13 @@ import {
   transformPoint,
   matrixMultiply,
   transformListToTransform,
-  getTransformList
+  getTransformList,
+  getRotationCenterFromRotateTransform
 } from './math.js'
-import { recalculateDimensions } from './recalculate.js'
+import { recalculateDimensions, withStartTransform } from './recalculate.js'
 import { isGecko } from '../common/browser.js'
 import { getParents } from '../common/util.js'
+import { createClipboardPayload } from './clipboard.js'
 
 const {
   MoveElementCommand,
@@ -104,14 +107,17 @@ const moveToBottomSelectedElem = () => {
     let t = selected
     const oldParent = t.parentNode
     const oldNextSibling = t.nextSibling
-    let { firstChild } = t.parentNode
-    if (firstChild.tagName === 'title') {
-      firstChild = firstChild.nextSibling
+    let firstChild = t.parentNode.firstElementChild
+    if (firstChild?.tagName === 'title') {
+      firstChild = firstChild.nextElementSibling
     }
     // This can probably be removed, as the defs should not ever apppear
     // inside a layer group
-    if (firstChild.tagName === 'defs') {
-      firstChild = firstChild.nextSibling
+    if (firstChild?.tagName === 'defs') {
+      firstChild = firstChild.nextElementSibling
+    }
+    if (!firstChild) {
+      return
     }
     t = t.parentNode.insertBefore(t, firstChild)
     // If the element actually moved position, add the command and fire the changed
@@ -179,7 +185,7 @@ const moveUpDownSelected = dir => {
   // event handler.
   if (oldNextSibling !== t.nextSibling) {
     svgCanvas.addCommandToHistory(
-      new MoveElementCommand(t, oldNextSibling, oldParent, 'Move ' + dir)
+      new MoveElementCommand(t, oldNextSibling, oldParent, `Move ${dir}`)
     )
     svgCanvas.call('changed', [t])
   }
@@ -208,20 +214,23 @@ const moveSelectedElements = (dx, dy, undoable = true) => {
   const batchCmd = new BatchCommand('position')
   selectedElements.forEach((selected, i) => {
     if (selected) {
+      // Store the existing transform before modifying
+      const existingTransform = selected.getAttribute('transform') || ''
+
       const xform = svgCanvas.getSvgRoot().createSVGTransform()
       const tlist = getTransformList(selected)
 
-      let dxLocal = Array.isArray(dx) ? dx[i] : dx;
-      let dyLocal = Array.isArray(dx) ? dy[i] : dy;
+      let dxLocal = Array.isArray(dx) ? dx[i] : dx
+      let dyLocal = Array.isArray(dx) ? dy[i] : dy
 
       // Adjust for parent transformation
-      const parent = selected.parentNode;
+      const parent = selected.parentNode
       if (parent && parent.tagName === 'g' && parent.getCTM) {
-        const iM = parent.getCTM().inverse();
-        const dxP = dxLocal * iM.a + dyLocal * iM.c;
-        const dyP = dxLocal * iM.b + dyLocal * iM.d;
-        dxLocal = dxP;
-        dyLocal = dyP;
+        const iM = parent.getCTM().inverse()
+        const dxP = dxLocal * iM.a + dyLocal * iM.c
+        const dyP = dxLocal * iM.b + dyLocal * iM.d
+        dxLocal = dxP
+        dyLocal = dyP
       }
 
       // dx and dy could be arrays
@@ -237,9 +246,19 @@ const moveSelectedElements = (dx, dy, undoable = true) => {
         tlist.appendItem(xform)
       }
 
-      const cmd = recalculateDimensions(selected)
+      const cmd = withStartTransform(
+        svgCanvas,
+        existingTransform,
+        () => recalculateDimensions(selected)
+      )
       if (cmd) {
         batchCmd.addSubCommand(cmd)
+      } else if ((selected.getAttribute('transform') || '') !== existingTransform) {
+        // For groups and other elements where recalculateDimensions returns null,
+        // record the transform change directly
+        batchCmd.addSubCommand(
+          new ChangeElementCommand(selected, { transform: existingTransform })
+        )
       }
 
       svgCanvas
@@ -278,9 +297,11 @@ const cloneSelectedElements = (x, y) => {
   const index = el => {
     if (!el) return -1
     let i = 0
+    let current = el
     do {
       i++
-    } while (el === el.previousElementSibling)
+      current = current.previousElementSibling
+    } while (current)
     return i
   }
 
@@ -310,7 +331,7 @@ const cloneSelectedElements = (x, y) => {
   while (i--) {
     // clone each element and replace it within copiedElements
     elem = copiedElements[i] = drawing.copyElem(copiedElements[i])
-      ; (currentGroup || drawing.getCurrentLayer()).append(elem)
+    ; (currentGroup || drawing.getCurrentLayer()).append(elem)
     batchCmd.addSubCommand(new InsertElementCommand(elem))
   }
 
@@ -666,8 +687,8 @@ const flipSelectedElements = (scaleX, scaleY) => {
 
     const tlist = getTransformList(selected)
     const combinedMatrix = matrixMultiply(
-      transformListToTransform(tlist).matrix,
-      flipMatrix
+      flipMatrix,
+      transformListToTransform(tlist).matrix
     )
 
     const flipTransform = svgRoot.createSVGTransform()
@@ -676,18 +697,11 @@ const flipSelectedElements = (scaleX, scaleY) => {
     tlist.clear()
     tlist.appendItem(flipTransform)
 
-    const prevStartTransform = svgCanvas.getStartTransform
-      ? svgCanvas.getStartTransform()
-      : null
-    if (svgCanvas.setStartTransform) {
-      svgCanvas.setStartTransform(existingTransform)
-    }
-
-    const cmd = recalculateDimensions(selected)
-
-    if (svgCanvas.setStartTransform) {
-      svgCanvas.setStartTransform(prevStartTransform)
-    }
+    const cmd = withStartTransform(
+      svgCanvas,
+      existingTransform,
+      () => recalculateDimensions(selected)
+    )
 
     if (cmd) {
       batchCmd.addSubCommand(cmd)
@@ -715,17 +729,12 @@ const flipSelectedElements = (scaleX, scaleY) => {
  * @returns {void}
  */
 const copySelectedElements = () => {
-  const selectedElements = svgCanvas.getSelectedElements()
-  const data = JSON.stringify(
-    selectedElements.map(x => svgCanvas.getJsonFromSvgElements(x))
-  )
+  const selectedElements = svgCanvas.getSelectedElements().filter(Boolean)
+  const data = JSON.stringify(createClipboardPayload(svgCanvas, selectedElements))
   // Use sessionStorage for the clipboard data.
   sessionStorage.setItem(svgCanvas.getClipboardID(), data)
+  svgCanvas.call('clipboardChanged')
   svgCanvas.flashStorage()
-
-  // Context menu might not exist (it is provided by editor.js).
-  const canvMenu = document.getElementById('se-cmenu_canvas')
-  canvMenu.setAttribute('enablemenuitems', '#paste,#paste_in_place')
 }
 
 /**
@@ -801,6 +810,44 @@ const groupSelectedElements = (type, urlArg) => {
 }
 
 /**
+ * Normalizes a child after a parent group's transform has been pushed onto it.
+ * @param {Element} elem
+ * @param {string|null} oldTransform
+ * @param {BatchCommand} batchCmd
+ * @param {boolean} undoable
+ * @returns {void}
+ */
+const normalizePushedGroupChild = (elem, oldTransform, batchCmd, undoable) => {
+  const oldTransformValue = oldTransform || ''
+  let cmd = withStartTransform(
+    svgCanvas,
+    oldTransformValue,
+    () => recalculateDimensions(elem)
+  )
+
+  if (!cmd && (elem.getAttribute('transform') || '') !== oldTransformValue) {
+    cmd = new ChangeElementCommand(elem, { transform: oldTransformValue })
+  }
+
+  if (undoable && cmd) {
+    batchCmd.addSubCommand(cmd)
+  }
+}
+
+const clonePushedGroupTransform = xform => {
+  const clone = svgCanvas.getSvgRoot().createSVGTransform()
+
+  if (xform.type === SVGTransform.SVG_TRANSFORM_ROTATE) {
+    const { x, y } = getRotationCenterFromRotateTransform(xform)
+    clone.setRotate(xform.angle, x, y)
+  } else {
+    clone.setMatrix(xform.matrix)
+  }
+
+  return clone
+}
+
+/**
  * Pushes all appropriate parent group properties down to its children, then
  * removes them from the group.
  * @function module:selected-elem.SvgCanvas#pushGroupProperty
@@ -814,7 +861,6 @@ const pushGroupProperty = (g, undoable) => {
   const xform = g.getAttribute('transform')
 
   const glist = getTransformList(g)
-  const m = transformListToTransform(glist).matrix
 
   const batchCmd = new BatchCommand('Push group properties')
 
@@ -879,10 +925,10 @@ const pushGroupProperty = (g, undoable) => {
           // Change this in future for different filters
           const suffix =
             blurElem?.tagName === 'feGaussianBlur' ? 'blur' : 'filter'
-          gfilter.id = elem.id + '_' + suffix
+          gfilter.id = `${elem.id}_${suffix}`
           svgCanvas.changeSelectedAttribute(
             'filter',
-            'url(#' + gfilter.id + ')',
+            `url(#${gfilter.id})`,
             [elem]
           )
         }
@@ -917,6 +963,8 @@ const pushGroupProperty = (g, undoable) => {
     }
 
     if (glist.numberOfItems) {
+      const oldxform = elem.getAttribute('transform')
+
       // TODO: if the group's transform is just a rotate, we can always transfer the
       // rotate() down to the children (collapsing consecutive rotates and factoring
       // out any translates)
@@ -983,26 +1031,21 @@ const pushGroupProperty = (g, undoable) => {
         }
       } else {
         // more complicated than just a rotate
-        // transfer the group's transform down to each child and then
-        // call recalculateDimensions()
-        const oldxform = elem.getAttribute('transform')
-        changes = {}
-        changes.transform = oldxform || ''
+        // transfer the group's transform down to each child
 
-        const newxform = svgCanvas.getSvgRoot().createSVGTransform()
-
-        // [ gm ] [ chm ] = [ chm ] [ gm' ]
-        // [ gm' ] = [ chmInv ] [ gm ] [ chm ]
-        const chm = transformListToTransform(chtlist).matrix
-        const chmInv = chm.inverse()
-        const gm = matrixMultiply(chmInv, m, chm)
-        newxform.setMatrix(gm)
-        chtlist.appendItem(newxform)
+        // Prepend the group's transform items to the child's transform list
+        // New transform = [group transform] [child transform]
+        // This preserves the correct application order and keeps rotate typed.
+        for (let j = glist.numberOfItems - 1; j >= 0; j--) {
+          const newxform = clonePushedGroupTransform(glist.getItem(j))
+          if (chtlist.numberOfItems) {
+            chtlist.insertItemBefore(newxform, 0)
+          } else {
+            chtlist.appendItem(newxform)
+          }
+        }
       }
-      const cmd = recalculateDimensions(elem)
-      if (cmd) {
-        batchCmd.addSubCommand(cmd)
-      }
+      normalizePushedGroupChild(elem, oldxform, batchCmd, undoable)
     }
   }
 
@@ -1058,8 +1101,13 @@ const convertToGroup = elem => {
     tlist.appendItem(xform)
     recalculateDimensions(elem)
     svgCanvas.call('selected', [elem])
+    return elem
   } else if (dataStorage.has($elem, 'symbol')) {
     elem = dataStorage.get($elem, 'symbol')
+    if (!elem) {
+      warn('Unable to convert <use>: missing symbol reference', null, 'selected-elem')
+      return
+    }
 
     ts = $elem.getAttribute('transform') || ''
     const pos = {
@@ -1078,14 +1126,15 @@ const convertToGroup = elem => {
     // Not ideal, but works
     ts += ' translate(' + (pos.x || 0) + ',' + (pos.y || 0) + ')'
 
-    const prev = $elem.previousElementSibling
+    const useParent = $elem.parentNode
+    const useNextSibling = $elem.nextSibling
 
     // Remove <use> element
     batchCmd.addSubCommand(
       new RemoveElementCommand(
         $elem,
-        $elem.nextElementSibling,
-        $elem.parentNode
+        useNextSibling,
+        useParent
       )
     )
     $elem.remove()
@@ -1137,7 +1186,9 @@ const convertToGroup = elem => {
     // now give the g itself a new id
     g.id = svgCanvas.getNextId()
 
-    prev.after(g)
+    if (useParent) {
+      useParent.insertBefore(g, useNextSibling)
+    }
 
     if (parent) {
       if (!hasMore) {
@@ -1165,7 +1216,7 @@ const convertToGroup = elem => {
       try {
         recalculateDimensions(n)
       } catch (e) {
-        console.error(e)
+        error('Error recalculating dimensions', e, 'selected-elem')
       }
     })
 
@@ -1185,8 +1236,10 @@ const convertToGroup = elem => {
     }
 
     svgCanvas.addCommandToHistory(batchCmd)
+    return g
   } else {
-    console.warn('Unexpected element to ungroup:', elem)
+    warn('Unexpected element to ungroup:', elem, 'selected-elem')
+    return null
   }
 }
 
@@ -1204,17 +1257,29 @@ const ungroupSelectedElement = () => {
     return
   }
   if (dataStorage.has(g, 'gsvg') || dataStorage.has(g, 'symbol')) {
-    // Is svg, so actually convert to group
-    convertToGroup(g)
-    return
-  }
-  if (g.tagName === 'use') {
+    // Is svg (e.g. imported content), so convert to a real group first, then
+    // fall through below to actually ungroup/flatten that new group - a
+    // single Ungroup action on imported content should ungroup it, not just
+    // silently swap its <use>/gsvg wrapper for a <g> that still needs a
+    // second Ungroup to do anything.
+    g = convertToGroup(g)
+    if (!g) { return }
+  } else if (g.tagName === 'use') {
     // Somehow doesn't have data set, so retrieve
-    const symbol = getElement(getHref(g).substr(1))
+    const href = getHref(g)
+    if (!href || !href.startsWith('#')) {
+      warn('Unexpected <use> without local reference:', g, 'selected-elem')
+      return
+    }
+    const symbol = getElement(href.slice(1))
+    if (!symbol) {
+      warn('Unexpected <use> without resolved reference:', g, 'selected-elem')
+      return
+    }
     dataStorage.put(g, 'symbol', symbol)
     dataStorage.put(g, 'ref', symbol)
-    convertToGroup(g)
-    return
+    g = convertToGroup(g)
+    if (!g) { return }
   }
   const parentsA = getParents(g.parentNode, 'a')
   if (parentsA?.length) {
@@ -1294,7 +1359,7 @@ const updateCanvas = (w, h) => {
     height: svgCanvas.contentH * zoom,
     x,
     y,
-    viewBox: '0 0 ' + svgCanvas.contentW + ' ' + svgCanvas.contentH
+    viewBox: `0 0 ${svgCanvas.contentW} ${svgCanvas.contentH}`
   })
 
   assignAttributes(bg, {
@@ -1314,7 +1379,7 @@ const updateCanvas = (w, h) => {
 
   svgCanvas.selectorManager.selectorParentGroup.setAttribute(
     'transform',
-    'translate(' + x + ',' + y + ')'
+    `translate(${x},${y})`
   )
 
   /**

@@ -22,7 +22,7 @@ const loadExtensionTranslation = async function (svgEditor) {
 
 export default {
   name,
-  async init() {
+  async init () {
     const svgEditor = this
     const canv = svgEditor.svgCanvas
     const { $id, $click } = canv
@@ -38,7 +38,7 @@ export default {
     let startY
 
     return {
-      callback() {
+      callback () {
         if ($id('tool_shapelib') === null) {
           const extPath = svgEditor.configObj.curConfig.extPath
           const buttonTemplate = `
@@ -53,7 +53,7 @@ export default {
           })
         }
       },
-      mouseDown(opts) {
+      mouseDown (opts) {
         const mode = canv.getMode()
         if (mode !== modeId) { return undefined }
 
@@ -88,7 +88,7 @@ export default {
           started: true
         }
       },
-      mouseMove(opts) {
+      mouseMove (opts) {
         const mode = canv.getMode()
         if (mode !== modeId) { return }
 
@@ -145,7 +145,7 @@ export default {
 
         lastBBox = curShape.getBBox()
       },
-      mouseUp(opts) {
+      mouseUp (opts) {
         const mode = canv.getMode()
         if (mode !== modeId) { return undefined }
 

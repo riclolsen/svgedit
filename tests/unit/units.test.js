@@ -31,11 +31,11 @@ describe('units', function () {
       * @implements {module:units.ElementContainer}
       */
       {
-        getBaseUnit() { return 'cm' },
-        getHeight() { return 600 },
-        getWidth() { return 800 },
-        getRoundDigits() { return 6 },
-        getElement(elementId) { return document.getElementById(elementId) }
+        getBaseUnit () { return 'cm' },
+        getHeight () { return 600 },
+        getWidth () { return 800 },
+        getRoundDigits () { return 6 },
+        getElement (elementId) { return document.getElementById(elementId) }
       }
     )
   })
@@ -87,5 +87,23 @@ describe('units', function () {
     // cm in default setup
     assert.equal(units.convertUnit(42), 1.11125)
     assert.equal(units.convertUnit(42, 'px'), 42)
+  })
+
+  it('Test svgedit.units.convertUnit() with mm', function () {
+    assert.equal(units.convertUnit(42, 'mm'), 11.1125)
+  })
+
+  it('Test svgedit.units.convertUnit() with in', function () {
+    assert.equal(units.convertUnit(96, 'in'), 1)
+  })
+
+  it('Test svgedit.units.convertUnit() with pt', function () {
+    const result = units.convertUnit(72, 'pt')
+    assert.ok(result > 0)
+  })
+
+  it('Test svgedit.units.convertUnit() with pc', function () {
+    const result = units.convertUnit(96, 'pc')
+    assert.ok(result > 0)
   })
 })

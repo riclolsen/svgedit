@@ -34,7 +34,7 @@ const loadExtensionTranslation = async function (svgEditor) {
 
 export default {
   name,
-  async init(_S) {
+  async init (_S) {
     const svgEditor = this
     const { svgCanvas } = svgEditor
     const { $id, $click } = svgCanvas
@@ -260,7 +260,7 @@ export default {
     return {
       name: svgEditor.i18next.t(`${name}:name`),
       // The callback should be used to load the DOM with the appropriate UI items
-      callback() {
+      callback () {
         const buttonTemplate = `
         <se-menu-item id="tool_clear" label="opensave.new_doc" shortcut="N" src="new.svg"></se-menu-item>`
         svgCanvas.insertChildAtIndex($id('main_button'), buttonTemplate, 0)

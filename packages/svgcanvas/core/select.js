@@ -10,11 +10,36 @@ import { isWebkit } from '../common/browser.js'
 import { getRotationAngle, getBBox, getStrokedBBox } from './utilities.js'
 import { transformListToTransform, transformBox, transformPoint, matrixMultiply, getTransformList } from './math.js'
 import { NS } from './namespaces'
+import { warn } from '../common/logger.js'
 
 let svgCanvas
-let selectorManager_ // A Singleton
 // change radius if touch screen
 const gripRadius = window.ontouchstart ? 10 : 4
+
+/**
+ * Private singleton manager for selector state
+ */
+class SelectModule {
+  #selectorManager = null
+
+  /**
+   * Initialize the select module with canvas
+   * @param {Object} canvas - The SVG canvas instance
+   * @returns {void}
+   */
+  init (canvas) {
+    svgCanvas = canvas
+    this.#selectorManager = new SelectorManager()
+  }
+
+  /**
+   * Get the singleton SelectorManager instance
+   * @returns {SelectorManager} The SelectorManager instance
+   */
+  getSelectorManager () {
+    return this.#selectorManager
+  }
+}
 
 /**
 * Private class for DOM element selection boxes.
@@ -25,7 +50,7 @@ export class Selector {
   * @param {Element} elem - DOM element associated with this selector
   * @param {module:utilities.BBoxObject} [bbox] - Optional bbox to use for initialization (prevents duplicate `getBBox` call).
   */
-  constructor(id, elem, bbox) {
+  constructor (id, elem, bbox) {
     // this is the selector's unique number
     this.id = id
 
@@ -38,14 +63,14 @@ export class Selector {
     // this holds a reference to the <g> element that holds all visual elements of the selector
     this.selectorGroup = svgCanvas.createSVGElement({
       element: 'g',
-      attr: { id: ('selectorGroup' + this.id) }
+      attr: { id: `selectorGroup${this.id}` }
     })
 
     // this holds a reference to the path rect
     this.selectorRect = svgCanvas.createSVGElement({
       element: 'path',
       attr: {
-        id: ('selectedBox' + this.id),
+        id: `selectedBox${this.id}`,
         fill: 'none',
         stroke: '#22C',
         'stroke-width': '1',
@@ -77,7 +102,7 @@ export class Selector {
   * @param {module:utilities.BBoxObject} bbox - Optional bbox to use for reset (prevents duplicate getBBox call).
   * @returns {void}
   */
-  reset(e, bbox) {
+  reset (e, bbox) {
     this.locked = true
     this.selectedElement = e
     this.resize(bbox)
@@ -89,13 +114,13 @@ export class Selector {
   * @param {boolean} show - Indicates whether grips should be shown or not
   * @returns {void}
   */
-  showGrips(show) {
+  showGrips (show) {
     const bShow = show ? 'inline' : 'none'
-    selectorManager_.selectorGripsGroup.setAttribute('display', bShow)
+    selectModule.getSelectorManager().selectorGripsGroup.setAttribute('display', bShow)
     const elem = this.selectedElement
     this.hasGrips = show
     if (elem && show) {
-      this.selectorGroup.append(selectorManager_.selectorGripsGroup)
+      this.selectorGroup.append(selectModule.getSelectorManager().selectorGripsGroup)
       Selector.updateGripCursors(getRotationAngle(elem))
     }
   }
@@ -105,10 +130,10 @@ export class Selector {
   * @param {module:utilities.BBoxObject} [bbox] - BBox to use for resize (prevents duplicate getBBox call).
   * @returns {void}
   */
-  resize(bbox) {
+  resize (bbox) {
     const dataStorage = svgCanvas.getDataStorage()
     const selectedBox = this.selectorRect
-    const mgr = selectorManager_
+    const mgr = selectModule.getSelectorManager()
     const selectedGrips = mgr.selectorGrips
     const selected = this.selectedElement
     const zoom = svgCanvas.getZoom()
@@ -213,10 +238,7 @@ export class Selector {
         nbah = (maxy - miny)
       }
 
-      const dstr = 'M' + nbax + ',' + nbay +
-        ' L' + (nbax + nbaw) + ',' + nbay +
-        ' ' + (nbax + nbaw) + ',' + (nbay + nbah) +
-        ' ' + nbax + ',' + (nbay + nbah) + 'z'
+      const dstr = `M${nbax},${nbay} L${nbax + nbaw},${nbay} ${nbax + nbaw},${nbay + nbah} ${nbax},${nbay + nbah}z`
 
       const xform = angle ? 'rotate(' + [angle, cx, cy].join(',') + ')' : ''
 
@@ -256,16 +278,16 @@ export class Selector {
   * @param {Float} angle - Current rotation angle in degrees
   * @returns {void}
   */
-  static updateGripCursors(angle) {
-    const dirArr = Object.keys(selectorManager_.selectorGrips)
+  static updateGripCursors (angle) {
+    const dirArr = Object.keys(selectModule.getSelectorManager().selectorGrips)
     let steps = Math.round(angle / 45)
     if (steps < 0) { steps += 8 }
     while (steps > 0) {
       dirArr.push(dirArr.shift())
       steps--
     }
-    Object.values(selectorManager_.selectorGrips).forEach((gripElement, i) => {
-      gripElement.setAttribute('style', ('cursor:' + dirArr[i] + '-resize'))
+    Object.values(selectModule.getSelectorManager().selectorGrips).forEach((gripElement, i) => {
+      gripElement.setAttribute('style', `cursor:${dirArr[i]}-resize`)
     })
   }
 }
@@ -277,7 +299,7 @@ export class SelectorManager {
   /**
    * Sets up properties and calls `initGroup`.
    */
-  constructor() {
+  constructor () {
     // this will hold the <g> element that contains all selector rects/grips
     this.selectorParentGroup = null
 
@@ -313,7 +335,7 @@ export class SelectorManager {
   * Resets the parent selector group element.
   * @returns {void}
   */
-  initGroup() {
+  initGroup () {
     const dataStorage = svgCanvas.getDataStorage()
     // remove old selector parent group if it existed
     if (this.selectorParentGroup?.parentNode) {
@@ -341,10 +363,10 @@ export class SelectorManager {
       const grip = svgCanvas.createSVGElement({
         element: 'circle',
         attr: {
-          id: ('selectorGrip_resize_' + dir),
+          id: `selectorGrip_resize_${dir}`,
           fill: '#22C',
           r: gripRadius,
-          style: ('cursor:' + dir + '-resize'),
+          style: `cursor:${dir}-resize`,
           // This expands the mouse-able area of the grips making them
           // easier to grab with the mouse.
           // This works in Opera and WebKit, but does not work in Firefox
@@ -426,7 +448,7 @@ export class SelectorManager {
   * @param {module:utilities.BBoxObject} [bbox] - Optional bbox to use for reset (prevents duplicate getBBox call).
   * @returns {Selector} The selector based on the given element
   */
-  requestSelector(elem, bbox) {
+  requestSelector (elem, bbox) {
     if (!elem) { return null }
 
     const N = this.selectors.length
@@ -456,13 +478,13 @@ export class SelectorManager {
   * @param {Element} elem - DOM element to remove the selector for
   * @returns {void}
   */
-  releaseSelector(elem) {
+  releaseSelector (elem) {
     if (!elem) { return }
     const N = this.selectors.length
     const sel = this.selectorMap[elem.id]
     if (!sel?.locked) {
       // TODO(codedread): Ensure this exists in this module.
-      console.warn('WARNING! selector was released but was already unlocked')
+      warn('WARNING! selector was released but was already unlocked', null, 'select')
     }
     for (let i = 0; i < N; ++i) {
       if (this.selectors[i] && this.selectors[i] === sel) {
@@ -485,7 +507,7 @@ export class SelectorManager {
   * @returns {SVGRectElement} The rubberBandBox DOM element. This is the rectangle drawn by
   * the user for selecting/zooming
   */
-  getRubberBandBox() {
+  getRubberBandBox () {
     if (!this.rubberBandBox) {
       this.rubberBandBox =
         svgCanvas.createSVGElement({
@@ -541,6 +563,9 @@ export class SelectorManager {
  * @property {module:select.Dimensions} dimensions
  */
 
+// Export singleton instance for backward compatibility
+const selectModule = new SelectModule()
+
 /**
  * Initializes this module.
  * @function module:select.init
@@ -549,12 +574,11 @@ export class SelectorManager {
  * @returns {void}
  */
 export const init = (canvas) => {
-  svgCanvas = canvas
-  selectorManager_ = new SelectorManager()
+  selectModule.init(canvas)
 }
 
 /**
  * @function module:select.getSelectorManager
  * @returns {module:select.SelectorManager} The SelectorManager instance.
  */
-export const getSelectorManager = () => selectorManager_
+export const getSelectorManager = () => selectModule.getSelectorManager()

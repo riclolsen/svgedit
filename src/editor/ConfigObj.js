@@ -17,7 +17,7 @@ export default class ConfigObj {
   /**
    * @param {PlainObject} editor
    */
-  constructor(editor) {
+  constructor (editor) {
     /**
       * Preferences.
       * @interface module:SVGEditor.Prefs
@@ -227,7 +227,7 @@ export default class ConfigObj {
    * @function setupCurPrefs
    * @returns {void}
    */
-  setupCurPrefs() {
+  setupCurPrefs () {
     const curPrefs = { ...this.defaultPrefs, ...this.curPrefs } // Now safe to merge with priority for curPrefs in the event any are already set
     // Export updated prefs
     this.curPrefs = curPrefs
@@ -237,7 +237,7 @@ export default class ConfigObj {
    * Sets up current config based on defaults.
    * @returns {void}
    */
-  setupCurConfig() {
+  setupCurConfig () {
     const curConfig = { ...this.defaultConfig, ...this.curConfig } // Now safe to merge with priority for curConfig in the event any are already set
 
     // Now deal with extensions and other array config
@@ -252,7 +252,7 @@ export default class ConfigObj {
    * @function loadFromURL Load config/data from URL if given
    * @returns {void}
    */
-  loadFromURL() {
+  loadFromURL () {
     const self = this
     const { search, searchParams } = new URL(location)
     if (search) {
@@ -347,7 +347,7 @@ export default class ConfigObj {
     *  that, it will then be subject to tampering
     * @returns {void}
   */
-  loadContentAndPrefs() {
+  loadContentAndPrefs () {
     if (!this.curConfig.forceStorage &&
       (this.curConfig.noStorageOnLoad ||
         !(/(?:^|;\s*)svgeditstore=(?:prefsAndContent|prefsOnly)/).test(document.cookie)
@@ -398,7 +398,7 @@ export default class ConfigObj {
   *   not be needed in `svgedit-config-iife.js`.
   * @returns {void}
 */
-  setConfig(opts, cfgCfg = {}) {
+  setConfig (opts, cfgCfg = {}) {
     /**
      *
      * @param {module:SVGEditor.Config|module:SVGEditor.Prefs} cfgObj
@@ -480,7 +480,7 @@ export default class ConfigObj {
   *  button to auto-calculate background, but otherwise uses `svgEditor.configObj.pref()` to
   *  be able to get default prefs or overridable settings
   */
-  pref(key, val, mayBeEmpty) {
+  pref (key, val, mayBeEmpty) {
     if (mayBeEmpty || val) {
       this.curPrefs[key] = val
       return undefined
@@ -492,7 +492,7 @@ export default class ConfigObj {
    * @function load load Config
    * @returns {void}
    */
-  load() {
+  load () {
     this.loadFromURL(this.editor)
     this.setupCurPrefs(this.editor)
   }

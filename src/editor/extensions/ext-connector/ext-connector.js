@@ -25,7 +25,7 @@ const loadExtensionTranslation = async function (svgEditor) {
 
 export default {
   name,
-  async init(S) {
+  async init (S) {
     const svgEditor = this
     const { svgCanvas } = svgEditor
     const { getElement, $id, $click, addSVGElementsFromJson } = svgCanvas
@@ -401,7 +401,7 @@ export default {
 
     return {
       name: svgEditor.i18next.t(`${name}:name`),
-      callback() {
+      callback () {
         // Add the button and its handler(s)
         const buttonTemplate = document.createElement('template')
         const title = `${name}:buttons.0.title`
@@ -415,7 +415,7 @@ export default {
           }
         })
       },
-      mouseDown(opts) {
+      mouseDown (opts) {
         // Retrieve necessary data from the SVG canvas and the event object
         const dataStorage = svgCanvas.getDataStorage()
         const svgContent = svgCanvas.getSvgContent()
@@ -455,7 +455,10 @@ export default {
               attr: {
                 id: 'conn_' + svgCanvas.getNextId(),
                 points: `${x},${y} ${x},${y} ${startX},${startY}`,
-                stroke: `#${initStroke.color}`,
+                stroke:
+                  initStroke.color === 'none'
+                    ? 'none'
+                    : `#${initStroke.color}`,
                 'stroke-width':
                   !startElem.stroke_width || startElem.stroke_width === 0
                     ? initStroke.width
@@ -482,7 +485,7 @@ export default {
 
         return undefined
       },
-      mouseMove(opts) {
+      mouseMove (opts) {
         // Exit early if there are no connectors
         if (connections.length === 0) return
 
@@ -526,7 +529,7 @@ export default {
           }
         }
       },
-      mouseUp(opts) {
+      mouseUp (opts) {
         // Get necessary data and initial setups
         const dataStorage = svgCanvas.getDataStorage()
         const svgContent = svgCanvas.getSvgContent()
@@ -620,7 +623,7 @@ export default {
           started
         }
       },
-      selectedChanged(opts) {
+      selectedChanged (opts) {
         // Get necessary data storage and SVG content
         const dataStorage = svgCanvas.getDataStorage()
         const svgContent = svgCanvas.getSvgContent()
@@ -653,7 +656,7 @@ export default {
         // Update connectors based on selected elements
         updateConnectors(svgCanvas.getSelectedElements())
       },
-      elementChanged(opts) {
+      elementChanged (opts) {
         // Get the necessary data storage
         const dataStorage = svgCanvas.getDataStorage()
 
@@ -708,7 +711,7 @@ export default {
           updateConnectors(svgCanvas.getSelectedElements())
         }
       },
-      IDsUpdated(input) {
+      IDsUpdated (input) {
         const remove = []
         input.elems.forEach(function (elem) {
           if ('se:connector' in elem.attr) {
@@ -728,7 +731,7 @@ export default {
         })
         return { remove }
       },
-      toolButtonStateUpdate(opts) {
+      toolButtonStateUpdate (opts) {
         const button = document.getElementById('tool_connect')
         if (opts.nostroke && button.pressed === true) {
           svgEditor.clickSelect()

@@ -13,7 +13,7 @@ describe('utilities bbox', function () {
    * @param {module:utilities.SVGElementJSON} jsonMap
    * @returns {SVGElement}
    */
-  function mockCreateSVGElement(jsonMap) {
+  function mockCreateSVGElement (jsonMap) {
     const elem = document.createElementNS(NS.SVG, jsonMap.element)
     Object.entries(jsonMap.attr).forEach(([attr, value]) => {
       elem.setAttribute(attr, value)
@@ -60,14 +60,14 @@ describe('utilities bbox', function () {
    * @param {module:utilities.SVGElementJSON} json
    * @returns {SVGElement}
    */
-  function mockaddSVGElementsFromJson(json) {
+  function mockaddSVGElementsFromJson (json) {
     const elem = mockCreateSVGElement(json)
     svgroot.append(elem)
     mockaddSVGElementsFromJsonCallCount++
     return elem
   }
   const mockPathActions = {
-    resetOrientation(pth) {
+    resetOrientation (pth) {
       if (pth?.nodeName !== 'path') { return false }
       const tlist = pth.transform.baseVal
       const m = math.transformListToTransform(tlist).matrix
@@ -114,14 +114,14 @@ describe('utilities bbox', function () {
     sandbox.append(svgroot)
 
     const mockSvgCanvas = {
-      createSVGElement(jsonMap) {
+      createSVGElement (jsonMap) {
         const elem = document.createElementNS(NS.SVG, jsonMap.element)
         Object.entries(jsonMap.attr).forEach(([attr, value]) => {
           elem.setAttribute(attr, value)
         })
         return elem
       },
-      getSvgRoot() { return svgroot }
+      getSvgRoot () { return svgroot }
     }
 
     path.init(mockSvgCanvas)
@@ -266,6 +266,21 @@ describe('utilities bbox', function () {
     // assert.ok(bbox.height >= 100 && bbox.height < 110);
     assert.equal(mockaddSVGElementsFromJsonCallCount, 1)
     elem.remove()
+  })
+
+  it('Test getBBoxWithTransform applies pure translate transforms', function () {
+    const { getBBoxWithTransform } = utilities
+
+    const elem = mockCreateSVGElement({
+      element: 'g',
+      attr: { id: 'translated-group', transform: 'translate(-386 287)' }
+    })
+    elem.getBBox = () => ({ x: 936, y: 40, width: 148, height: 64 })
+    svgroot.append(elem)
+
+    const bbox = getBBoxWithTransform(elem, mockaddSVGElementsFromJson, mockPathActions)
+
+    assert.deepEqual(bbox, { x: 550, y: 327, width: 148, height: 64 })
   })
 
   it('Test getBBoxWithTransform with rotation and matrix transforms', function () {
@@ -497,7 +512,7 @@ describe('utilities bbox', function () {
    * @param {Float} degrees
    * @returns {Float}
    */
-  function radians(degrees) {
+  function radians (degrees) {
     return degrees * Math.PI / 180
   }
 
@@ -508,7 +523,7 @@ describe('utilities bbox', function () {
    * @param {module:math.XYObject} origin
    * @returns {module:math.XYObject}
    */
-  function rotatePoint(point, angle, origin = { x: 0, y: 0 }) {
+  function rotatePoint (point, angle, origin = { x: 0, y: 0 }) {
     const x = point.x - origin.x
     const y = point.y - origin.y
     const theta = radians(angle)
@@ -524,7 +539,7 @@ describe('utilities bbox', function () {
    * @param {module:math.XYObject} origin
    * @returns {module:utilities.BBoxObject}
    */
-  function rotateRect(rect, angle, origin) {
+  function rotateRect (rect, angle, origin) {
     const tl = rotatePoint({ x: rect.x, y: rect.y }, angle, origin)
     const tr = rotatePoint({ x: rect.x + rect.width, y: rect.y }, angle, origin)
     const br = rotatePoint({ x: rect.x + rect.width, y: rect.y + rect.height }, angle, origin)

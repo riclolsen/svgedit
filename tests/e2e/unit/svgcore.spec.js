@@ -69,7 +69,7 @@ test.describe('SVG core modules in browser', () => {
         }
       }
     })
-    expect(result.shortFloat).toEqual([0, 1, 3.4568, 1.2344, 1.2346])
+    expect(result.shortFloat).toEqual([0, 1, 3.45678, 1.23443, 1.23455])
     result.validUnits.forEach((isValid) => expect(isValid).toBe(true))
     expect(result.idChecks.okExisting).toBe(true)
     expect(result.idChecks.okNew).toBe(true)

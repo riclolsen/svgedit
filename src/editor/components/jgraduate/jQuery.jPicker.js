@@ -1408,6 +1408,11 @@ export function jPickerMethod (elem, options, commitCallback, liveCallback, canc
               : (poslt.top + Number.parseInt(win.position.y)) + 'px'
     } else {
       container = that
+      // Remove any table left behind by a previous invocation on this same
+      // persistent container instead of appending another one alongside it
+      // (this container is shown/hidden, not recreated, between opens).
+      const existingTable = container.querySelector('#jPicker-table')
+      if (existingTable) { existingTable.remove() }
       const newDiv = document.createElement('div')
       newDiv.innerHTML = controlHtml
       while (newDiv.children.length > 0) {

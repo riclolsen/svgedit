@@ -6,6 +6,7 @@
  */
 import * as draw from './draw.js'
 import * as hstry from './history.js'
+import { BBOX_AFFECTING_ATTRS } from './history.js'
 import {
   getRotationAngle, getBBox as utilsGetBBox, setHref, getStrokedBBoxDefaultVisible
 } from './utilities.js'
@@ -46,12 +47,29 @@ export const getUndoManager = () => {
       if (eventType === EventTypes.BEFORE_UNAPPLY || eventType === EventTypes.BEFORE_APPLY) {
         svgCanvas.clearSelection()
       } else if (eventType === EventTypes.AFTER_APPLY || eventType === EventTypes.AFTER_UNAPPLY) {
+        const cmdType = cmd.type()
+        const isApply = (eventType === EventTypes.AFTER_APPLY)
+        if (cmdType === 'ChangeElementCommand' && cmd.elem === svgCanvas.getSvgContent()) {
+          const values = isApply ? cmd.newValues : cmd.oldValues
+          if (values.width !== null && values.width !== undefined && values.width !== '') {
+            const newContentW = Number(values.width)
+            if (Number.isFinite(newContentW) && newContentW > 0) {
+              svgCanvas.contentW = newContentW
+            }
+          }
+          if (values.height !== null && values.height !== undefined && values.height !== '') {
+            const newContentH = Number(values.height)
+            if (Number.isFinite(newContentH) && newContentH > 0) {
+              svgCanvas.contentH = newContentH
+            }
+          }
+        }
         const elems = cmd.elements()
         svgCanvas.pathActions.clear()
         svgCanvas.call('changed', elems)
-        const cmdType = cmd.type()
-        const isApply = (eventType === EventTypes.AFTER_APPLY)
-        if (cmdType === 'MoveElementCommand') {
+        if (cmdType === 'BatchCommand' && cmd.refreshUseData) {
+          svgCanvas.setUseData(svgCanvas.getSvgContent())
+        } else if (cmdType === 'MoveElementCommand') {
           const parent = isApply ? cmd.newParent : cmd.oldParent
           if (parent === svgCanvas.getSvgContent()) {
             draw.identifyLayers()
@@ -116,7 +134,7 @@ export const getUndoManager = () => {
 * @param {Element} elem - The (text) DOM element to clone
 * @returns {Element} Cloned element
 */
-export const ffClone = function (elem) {
+export const ffClone = (elem) => {
   if (!isGecko()) { return elem }
   const clone = elem.cloneNode(true)
   elem.before(clone)
@@ -189,7 +207,10 @@ export const changeSelectedAttributeNoUndoMethod = (attr, newValue, elems) => {
       } else if (attr === '#href') {
         setHref(elem, newValue)
       } else if (newValue) {
-        elem.setAttribute(attr, isNaN(parseFloat(newValue)) ? newValue : parseFloat(newValue))
+        // Number(), unlike parseFloat(), rejects a value with a trailing unit suffix
+        // (e.g. "10pt", "2px") instead of silently truncating it to a bare number.
+        const asNumber = Number(newValue)
+        elem.setAttribute(attr, Number.isNaN(asNumber) ? newValue : asNumber)
       } else if (typeof newValue === 'number') {
         elem.setAttribute(attr, newValue)
       } else {
@@ -213,7 +234,7 @@ export const changeSelectedAttributeNoUndoMethod = (attr, newValue, elems) => {
         elem = ffClone(elem)
       }
       // Timeout needed for Opera & Firefox
-      // codedread: it is now possible for this function to be called with elements
+      // codedread: it is now possible for this to be called with elements
       // that are not in the selectedElements array, we need to only request a
       // selector if the element is in that array
       if (selectedElements.includes(elem)) {
@@ -224,26 +245,39 @@ export const changeSelectedAttributeNoUndoMethod = (attr, newValue, elems) => {
           svgCanvas.selectorManager.requestSelector(elem).resize()
         }, 0)
       }
-      // if this element was rotated, and we changed the position of this element
-      // we need to update the rotational transform attribute
+      // Only recalculate rotation center for attributes that change element geometry.
+      // Non-geometric attributes (stroke-width, fill, opacity, etc.) don't affect
+      // the bbox center, so the rotation is already correct and must not be touched.
+      // BBOX_AFFECTING_ATTRS is imported from history.js to keep the list in one place.
       const angle = getRotationAngle(elem)
-      if (angle !== 0 && attr !== 'transform') {
+      if (angle !== 0 && attr !== 'transform' && BBOX_AFFECTING_ATTRS.has(attr)) {
         const tlist = getTransformList(elem)
         let n = tlist.numberOfItems
         while (n--) {
           const xform = tlist.getItem(n)
           if (xform.type === 4) {
-            // remove old rotate
+            // Compute bbox BEFORE removing the rotation so we can bail out
+            // safely if getBBox returns nothing (avoids losing the rotation).
+            const box = utilsGetBBox(elem)
+            if (!box) break
+
             tlist.removeItem(n)
 
-            const box = utilsGetBBox(elem)
+            // Transform bbox center through only the transforms that come
+            // AFTER the rotation in the list (not the pre-rotation transforms).
+            // After removeItem(n), what was at n+1 is now at n.
+            let centerMatrix
+            if (n < tlist.numberOfItems) {
+              centerMatrix = transformListToTransform(tlist, n, tlist.numberOfItems - 1).matrix
+            } else {
+              centerMatrix = svgCanvas.getSvgRoot().createSVGMatrix() // identity
+            }
             const center = transformPoint(
-              box.x + box.width / 2, box.y + box.height / 2, transformListToTransform(tlist).matrix
+              box.x + box.width / 2, box.y + box.height / 2, centerMatrix
             )
-            const cx = center.x
-            const cy = center.y
+
             const newrot = svgCanvas.getSvgRoot().createSVGTransform()
-            newrot.setRotate(angle, cx, cy)
+            newrot.setRotate(angle, center.x, center.y)
             tlist.insertItemBefore(newrot, n)
             break
           }
@@ -264,7 +298,7 @@ export const changeSelectedAttributeNoUndoMethod = (attr, newValue, elems) => {
 * @param {Element[]} elems - The DOM elements to apply the change to
 * @returns {void}
 */
-export const changeSelectedAttributeMethod = function (attr, val, elems) {
+export const changeSelectedAttributeMethod = (attr, val, elems) => {
   const selectedElements = svgCanvas.getSelectedElements()
   elems = elems || selectedElements
   svgCanvas.undoMgr.beginUndoableChange(attr, elems)

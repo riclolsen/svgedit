@@ -6,7 +6,63 @@
  * @copyright 2010 Jeff Schiller
  */
 
+import { NS } from './namespaces.js'
 import { getHref, setHref, getRotationAngle, getBBox } from './utilities.js'
+import { getTransformList, transformListToTransform, transformPoint } from './math.js'
+
+// Attributes that affect an element's bounding box. Only these require
+// recalculating the rotation center when changed.
+export const BBOX_AFFECTING_ATTRS = new Set([
+  'x', 'y', 'x1', 'y1', 'x2', 'y2',
+  'cx', 'cy', 'r', 'rx', 'ry',
+  'width', 'height', 'd', 'points'
+])
+
+/**
+* Relocate rotation center after a bbox-affecting attribute change.
+* Uses the transform list API to update only the rotation entry,
+* preserving compound transforms (translate, scale, etc.).
+* @param {Element} elem - SVG element
+* @param {string[]} changedAttrs - attribute names that were changed
+*/
+function relocateRotationCenter (elem, changedAttrs) {
+  const hasBboxChange = changedAttrs.some(attr => BBOX_AFFECTING_ATTRS.has(attr))
+  if (!hasBboxChange) return
+
+  const angle = getRotationAngle(elem)
+  if (!angle) return
+
+  const tlist = getTransformList(elem)
+  let n = tlist.numberOfItems
+  while (n--) {
+    const xform = tlist.getItem(n)
+    if (xform.type === 4) { // SVG_TRANSFORM_ROTATE
+      // Compute bbox BEFORE removing the rotation so we can bail out
+      // safely if getBBox returns nothing (avoids losing the rotation).
+      const box = getBBox(elem)
+      if (!box) return
+
+      tlist.removeItem(n)
+
+      // Transform bbox center through only post-rotation transforms.
+      // After removeItem(n), what was at n+1 is now at n.
+      let centerMatrix
+      if (n < tlist.numberOfItems) {
+        centerMatrix = transformListToTransform(tlist, n, tlist.numberOfItems - 1).matrix
+      } else {
+        centerMatrix = elem.ownerSVGElement.createSVGMatrix() // identity
+      }
+      const center = transformPoint(
+        box.x + box.width / 2, box.y + box.height / 2, centerMatrix
+      )
+
+      const newrot = elem.ownerSVGElement.createSVGTransform()
+      newrot.setRotate(angle, center.x, center.y)
+      tlist.insertItemBefore(newrot, n)
+      break
+    }
+  }
+}
 
 /**
 * Group: Undo/Redo history management.
@@ -140,7 +196,7 @@ export class MoveElementCommand extends Command {
   constructor (elem, oldNextSibling, oldParent, text) {
     super()
     this.elem = elem
-    this.text = text ? ('Move ' + elem.tagName + ' to ' + text) : ('Move ' + elem.tagName)
+    this.text = text ? `Move ${elem.tagName} to ${text}` : `Move ${elem.tagName}`
     this.oldNextSibling = oldNextSibling
     this.oldParent = oldParent
     this.newNextSibling = elem.nextSibling
@@ -155,7 +211,11 @@ export class MoveElementCommand extends Command {
   */
   apply (handler) {
     super.apply(handler, () => {
-      this.elem = this.newParent.insertBefore(this.elem, this.newNextSibling)
+      const reference =
+        this.newNextSibling && this.newNextSibling.parentNode === this.newParent
+          ? this.newNextSibling
+          : null
+      this.elem = this.newParent.insertBefore(this.elem, reference)
     })
   }
 
@@ -167,7 +227,11 @@ export class MoveElementCommand extends Command {
   */
   unapply (handler) {
     super.unapply(handler, () => {
-      this.elem = this.oldParent.insertBefore(this.elem, this.oldNextSibling)
+      const reference =
+        this.oldNextSibling && this.oldNextSibling.parentNode === this.oldParent
+          ? this.oldNextSibling
+          : null
+      this.elem = this.oldParent.insertBefore(this.elem, reference)
     })
   }
 }
@@ -184,7 +248,7 @@ export class InsertElementCommand extends Command {
   constructor (elem, text) {
     super()
     this.elem = elem
-    this.text = text || ('Create ' + elem.tagName)
+    this.text = text || `Create ${elem.tagName}`
     this.parent = elem.parentNode
     this.nextSibling = this.elem.nextSibling
   }
@@ -197,7 +261,11 @@ export class InsertElementCommand extends Command {
   */
   apply (handler) {
     super.apply(handler, () => {
-      this.elem = this.parent.insertBefore(this.elem, this.nextSibling)
+      const reference =
+        this.nextSibling && this.nextSibling.parentNode === this.parent
+          ? this.nextSibling
+          : null
+      this.elem = this.parent.insertBefore(this.elem, reference)
     })
   }
 
@@ -229,7 +297,7 @@ export class RemoveElementCommand extends Command {
   constructor (elem, oldNextSibling, oldParent, text) {
     super()
     this.elem = elem
-    this.text = text || ('Delete ' + elem.tagName)
+    this.text = text || `Delete ${elem.tagName}`
     this.nextSibling = oldNextSibling
     this.parent = oldParent
   }
@@ -255,10 +323,11 @@ export class RemoveElementCommand extends Command {
   */
   unapply (handler) {
     super.unapply(handler, () => {
-      if (!this.nextSibling) {
-        console.error('Reference element was lost')
-      }
-      this.parent.insertBefore(this.elem, this.nextSibling) // Don't use `before` or `prepend` as `this.nextSibling` may be `null`
+      const reference =
+        this.nextSibling && this.nextSibling.parentNode === this.parent
+          ? this.nextSibling
+          : null
+      this.parent.insertBefore(this.elem, reference) // Don't use `before` or `prepend` as `reference` may be `null`
     })
   }
 }
@@ -284,7 +353,7 @@ export class ChangeElementCommand extends Command {
   constructor (elem, attrs, text) {
     super()
     this.elem = elem
-    this.text = text ? ('Change ' + elem.tagName + ' ' + text) : ('Change ' + elem.tagName)
+    this.text = text ? `Change ${elem.tagName} ${text}` : `Change ${elem.tagName}`
     this.newValues = {}
     this.oldValues = attrs
     for (const attr in attrs) {
@@ -308,19 +377,21 @@ export class ChangeElementCommand extends Command {
     super.apply(handler, () => {
       let bChangedTransform = false
       Object.entries(this.newValues).forEach(([attr, value]) => {
-        if (value) {
-          if (attr === '#text') {
-            this.elem.textContent = value
-          } else if (attr === '#href') {
-            setHref(this.elem, value)
+        const isNullishOrEmpty = value === null || value === undefined || value === ''
+        if (attr === '#text') {
+          this.elem.textContent = value === null || value === undefined ? '' : String(value)
+        } else if (attr === '#href') {
+          if (isNullishOrEmpty) {
+            this.elem.removeAttribute('href')
+            this.elem.removeAttributeNS(NS.XLINK, 'href')
           } else {
-            this.elem.setAttribute(attr, value)
+            setHref(this.elem, String(value))
           }
-        } else if (attr === '#text') {
-          this.elem.textContent = ''
-        } else {
+        } else if (isNullishOrEmpty) {
           this.elem.setAttribute(attr, '')
           this.elem.removeAttribute(attr)
+        } else {
+          this.elem.setAttribute(attr, value)
         }
 
         if (attr === 'transform') { bChangedTransform = true }
@@ -328,16 +399,7 @@ export class ChangeElementCommand extends Command {
 
       // relocate rotational transform, if necessary
       if (!bChangedTransform) {
-        const angle = getRotationAngle(this.elem)
-        if (angle) {
-          const bbox = getBBox(this.elem)
-          const cx = bbox.x + bbox.width / 2
-          const cy = bbox.y + bbox.height / 2
-          const rotate = ['rotate(', angle, ' ', cx, ',', cy, ')'].join('')
-          if (rotate !== this.elem.getAttribute('transform')) {
-            this.elem.setAttribute('transform', rotate)
-          }
-        }
+        relocateRotationCenter(this.elem, Object.keys(this.newValues))
       }
     })
   }
@@ -352,33 +414,26 @@ export class ChangeElementCommand extends Command {
     super.unapply(handler, () => {
       let bChangedTransform = false
       Object.entries(this.oldValues).forEach(([attr, value]) => {
-        if (value) {
-          if (attr === '#text') {
-            this.elem.textContent = value
-          } else if (attr === '#href') {
-            setHref(this.elem, value)
+        const isNullishOrEmpty = value === null || value === undefined || value === ''
+        if (attr === '#text') {
+          this.elem.textContent = value === null || value === undefined ? '' : String(value)
+        } else if (attr === '#href') {
+          if (isNullishOrEmpty) {
+            this.elem.removeAttribute('href')
+            this.elem.removeAttributeNS(NS.XLINK, 'href')
           } else {
-            this.elem.setAttribute(attr, value)
+            setHref(this.elem, String(value))
           }
-        } else if (attr === '#text') {
-          this.elem.textContent = ''
-        } else {
+        } else if (isNullishOrEmpty) {
           this.elem.removeAttribute(attr)
+        } else {
+          this.elem.setAttribute(attr, value)
         }
         if (attr === 'transform') { bChangedTransform = true }
       })
       // relocate rotational transform, if necessary
       if (!bChangedTransform) {
-        const angle = getRotationAngle(this.elem)
-        if (angle) {
-          const bbox = getBBox(this.elem)
-          const cx = bbox.x + bbox.width / 2
-          const cy = bbox.y + bbox.height / 2
-          const rotate = ['rotate(', angle, ' ', cx, ',', cy, ')'].join('')
-          if (rotate !== this.elem.getAttribute('transform')) {
-            this.elem.setAttribute('transform', rotate)
-          }
-        }
+        relocateRotationCenter(this.elem, Object.keys(this.oldValues))
       }
     })
   }
@@ -602,7 +657,7 @@ export class UndoManager {
     const p = this.undoChangeStackPointer--
     const changeset = this.undoableChangeStack[p]
     const { attrName } = changeset
-    const batchCmd = new BatchCommand('Change ' + attrName)
+    const batchCmd = new BatchCommand(`Change ${attrName}`)
     let i = changeset.elements.length
     while (i--) {
       const elem = changeset.elements[i]

@@ -1,6 +1,6 @@
 {
   "name": "@svgedit/react-test",
-  "version": "7.4.0",
+  "version": "7.4.2",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -30,11 +30,14 @@
   },
   "author": "OptimistikSAS",
   "license": "MIT",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "dependencies": {
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   },
   "devDependencies": {
-    "@babel/preset-react": "^7.27.1"
+    "@babel/preset-react": "^8.0.1"
   }
 }

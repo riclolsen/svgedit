@@ -6,30 +6,30 @@
 
 export const parseXSAC = (label) => {
   if (!label || !label.trim()) {
-    return [];
+    return []
   }
 
   try {
     // Try wrapping in brackets to handle multiple comma-separated objects
     // This handles both single object "{...}" and multiple "{...},{...}"
-    const wrapped = `[${label}]`;
+    const wrapped = `[${label}]`
     // console.log('SCADA: wrapping label', wrapped);
-    return JSON.parse(wrapped);
+    return JSON.parse(wrapped)
   } catch (e) {
-    console.warn("SCADA: Failed to parse XSAC label via JSON wrapper:", e);
+    console.warn('SCADA: Failed to parse XSAC label via JSON wrapper:', e)
 
     // Fallback: Try regex if the JSON might be malformed or non-standard
     // This is a naive regex and might need improvement for nested objects/arrays containing '},{'
     // But for standard XSAC it might suffice if the above fails.
     // Ideally the JSON approach should work 99% of the time.
-    return [];
+    return []
   }
-};
+}
 
 export const serializeXSAC = (animations) => {
   if (!animations || !Array.isArray(animations) || animations.length === 0) {
-    return "";
+    return ''
   }
   // Serialize each object and join with comma
-  return animations.map(anim => JSON.stringify(anim)).join(",");
-};
+  return animations.map(anim => JSON.stringify(anim)).join(',')
+}

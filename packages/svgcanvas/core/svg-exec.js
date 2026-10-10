@@ -8,6 +8,7 @@
 import { jsPDF as JsPDF } from 'jspdf'
 import 'svg2pdf.js'
 import * as history from './history.js'
+import { error } from '../common/logger.js'
 import {
   text2xml,
   cleanupElement,
@@ -131,15 +132,12 @@ const svgToString = (elem, indent) => {
   const nsMap = svgCanvas.getNsMap()
   const out = []
   const unit = curConfig.baseUnit
-  const unitRe = new RegExp('^-?[\\d\\.]+' + unit + '$')
+  const unitRe = new RegExp(`^-?[\\d\\.]+${unit}$`)
 
   if (elem) {
     cleanupElement(elem)
     const attrs = [...elem.attributes]
     const childs = elem.childNodes
-    attrs.sort((a, b) => {
-      return a.name > b.name ? -1 : 1
-    })
 
     for (let i = 0; i < indent; i++) {
       out.push(' ')
@@ -164,7 +162,10 @@ const svgToString = (elem, indent) => {
       // }
       if (curConfig.dynamicOutput) {
         vb = elem.getAttribute('viewBox')
-        out.push(' viewBox="' + vb + '" xmlns="' + NS.SVG + '"')
+        if (!vb) {
+          vb = [0, 0, res.w, res.h].join(' ')
+        }
+        out.push(` viewBox="${vb}" xmlns="${NS.SVG}"`)
       } else {
         if (unit !== 'px') {
           res.w = convertUnit(res.w, unit) + unit
@@ -193,14 +194,14 @@ const svgToString = (elem, indent) => {
           nsMap[uri] !== 'xml'
         ) {
           nsuris[uri] = true
-          out.push(' xmlns:' + nsMap[uri] + '="' + uri + '"')
+          out.push(` xmlns:${nsMap[uri]}="${uri}"`)
         }
         if (el.attributes.length > 0) {
           for (const [, attr] of Object.entries(el.attributes)) {
             const u = attr.namespaceURI
             if (u && !nsuris[u] && nsMap[u] !== 'xmlns' && nsMap[u] !== 'xml') {
               nsuris[u] = true
-              out.push(' xmlns:' + nsMap[u] + '="' + u + '"')
+              out.push(` xmlns:${nsMap[u]}="${u}"`)
             }
           }
         }
@@ -246,7 +247,8 @@ const svgToString = (elem, indent) => {
       }
 
       const mozAttrs = ['-moz-math-font-style', '_moz-math-font-style']
-      for (let i = attrs.length - 1; i >= 0; i--) {
+      // Do not iterate attributes in reverse order!
+      for (let i = 0; i < attrs.length; i++) {
         const attr = attrs[i]
         let attrVal = toXml(attr.value)
         // remove bogus attributes added by Gecko
@@ -261,6 +263,7 @@ const svgToString = (elem, indent) => {
             continue
           }
         }
+
         if (attrVal !== '') {
           if (attrVal.startsWith('pointer-events')) {
             continue
@@ -272,7 +275,8 @@ const svgToString = (elem, indent) => {
           if (attr.localName === 'd') {
             attrVal = svgCanvas.pathActions.convertPath(elem, true)
           }
-          if (!isNaN(attrVal)) {
+          // Properly parse attribute value if it is a number!
+          if (!isNaN(attrVal) && !isNaN(parseFloat(attrVal))) {
             attrVal = shortFloat(attrVal)
           } else if (unitRe.test(attrVal)) {
             attrVal = shortFloat(attrVal) + unit
@@ -304,6 +308,23 @@ const svgToString = (elem, indent) => {
             out.push(attrVal)
             out.push('"')
           }
+        } else {
+          // Do not skip data attribute even they are empty!
+          if ((/^data[-]/i).test(attr.localName)) {
+            // map various namespaces to our fixed namespace prefixes
+            // (the default xmlns attribute itself does not get a prefix)
+            if (
+              !attr.namespaceURI ||
+              attr.namespaceURI === NS.SVG ||
+              nsMap[attr.namespaceURI]
+            ) {
+              out.push(' ')
+              out.push(attr.nodeName)
+              out.push('="')
+              out.push(attrVal)
+              out.push('"')
+            }
+          }
         }
       }
     }
@@ -325,10 +346,9 @@ const svgToString = (elem, indent) => {
             break
           case 3: {
             // text node
-            // If xml:space="preserve" is NOT set, we strip whitespace
             const isPreserve = elem.getAttribute('xml:space') === 'preserve'
             let str = child.nodeValue
-            if (!isPreserve) {
+            if (!isPreserve && !isTextTag) {
               str = str.replace(/^\s+|\s+$/g, '')
             }
             if (str !== '') {
@@ -479,7 +499,7 @@ const setSvgString = (xmlString, preventUndo) => {
 
     Object.entries(ids).forEach(([key, value]) => {
       if (value > 1) {
-        const nodes = content.querySelectorAll('[id="' + key + '"]')
+        const nodes = content.querySelectorAll(`[id="${key}"]`)
         for (let i = 1; i < nodes.length; i++) {
           nodes[i].setAttribute('id', svgCanvas.getNextId())
         }
@@ -535,14 +555,20 @@ const setSvgString = (xmlString, preventUndo) => {
     if (content.getAttribute('viewBox')) {
       const viBox = content.getAttribute('viewBox')
       const vb = viBox.split(/[ ,]+/)
-      attrs.width = vb[2]
-      attrs.height = vb[3]
+      const vbWidth = Number(vb[2])
+      const vbHeight = Number(vb[3])
+      if (Number.isFinite(vbWidth)) {
+        attrs.width = vbWidth
+      }
+      if (Number.isFinite(vbHeight)) {
+        attrs.height = vbHeight
+      }
       // handle content that doesn't have a viewBox
     } else {
       ;['width', 'height'].forEach(dim => {
         // Set to 100 if not given
         const val = content.getAttribute(dim) || '100%'
-        if (String(val).substr(-1) === '%') {
+        if (String(val).slice(-1) === '%') {
           // Use user units if percentage given
           percs = true
         } else {
@@ -568,16 +594,25 @@ const setSvgString = (xmlString, preventUndo) => {
     // Percentage width/height, so let's base it on visible elements
     if (percs) {
       const bb = getStrokedBBoxDefaultVisible()
-      attrs.width = bb.width + bb.x
-      attrs.height = bb.height + bb.y
+      if (bb && typeof bb === 'object') {
+        attrs.width = bb.width + bb.x
+        attrs.height = bb.height + bb.y
+      } else {
+        if (attrs.width === null || attrs.width === undefined) {
+          attrs.width = 100
+        }
+        if (attrs.height === null || attrs.height === undefined) {
+          attrs.height = 100
+        }
+      }
     }
 
     // Just in case negative numbers are given or
     // result from the percs calculation
-    if (attrs.width <= 0) {
+    if (!Number.isFinite(attrs.width) || attrs.width <= 0) {
       attrs.width = 100
     }
-    if (attrs.height <= 0) {
+    if (!Number.isFinite(attrs.height) || attrs.height <= 0) {
       attrs.height = 100
     }
 
@@ -606,7 +641,7 @@ const setSvgString = (xmlString, preventUndo) => {
     if (!preventUndo) svgCanvas.addCommandToHistory(batchCmd)
     svgCanvas.call('sourcechanged', [svgCanvas.getSvgContent()])
   } catch (e) {
-    console.error(e)
+    error('Error setting SVG string', e, 'svg-exec')
     return false
   }
 
@@ -619,6 +654,7 @@ const setSvgString = (xmlString, preventUndo) => {
  * @function module:svgcanvas.SvgCanvas#importSvgString
  * @param {string} xmlString - The SVG as XML text.
  * @param {boolean} preserveDimension - A boolean to force to preserve initial dimension of the imported svg (force svgEdit don't apply a transformation on the imported svg)
+ * @param {boolean} doNotUseExisting - Do not use existing imported elements.
  * @fires module:svgcanvas.SvgCanvas#event:changed
  * @returns {null|Element} This function returns null if the import was unsuccessful, or the element otherwise.
  * @todo
@@ -628,7 +664,7 @@ const setSvgString = (xmlString, preventUndo) => {
  * arbitrary transform lists, but makes some assumptions about how the transform list
  * was obtained
  */
-const importSvgString = (xmlString, preserveDimension) => {
+const importSvgString = (xmlString, preserveDimension, doNotUseExisting) => {
   const dataStorage = svgCanvas.getDataStorage()
   let j
   let ts
@@ -636,7 +672,6 @@ const importSvgString = (xmlString, preserveDimension) => {
   try {
     // Get unique ID
     const uid = hashCode(xmlString)
-
     let useExisting = false
     // Look for symbol and make sure symbol exists in image
     if (svgCanvas.getImportIds(uid) && svgCanvas.getImportIds(uid).symbol) {
@@ -648,7 +683,7 @@ const importSvgString = (xmlString, preserveDimension) => {
 
     const batchCmd = new BatchCommand('Import Image')
     let symbol
-    if (useExisting) {
+    if (useExisting && !doNotUseExisting) {
       symbol = svgCanvas.getImportIds(uid).symbol
       ts = svgCanvas.getImportIds(uid).xform
     } else {
@@ -676,16 +711,26 @@ const importSvgString = (xmlString, preserveDimension) => {
 
       // TODO: properly handle preserveAspectRatio
       const // canvasw = +svgContent.getAttribute('width'),
-        canvash = Number(svgCanvas.getSvgContent().getAttribute('height'))
+        rawCanvash = Number(svgCanvas.getSvgContent().getAttribute('height'))
+      const canvash =
+        Number.isFinite(rawCanvash) && rawCanvash > 0
+          ? rawCanvash
+          : (Number(svgCanvas.getCurConfig().dimensions?.[1]) || 100)
       // imported content should be 1/3 of the canvas on its largest dimension
 
+      const vbWidth = vb[2]
+      const vbHeight = vb[3]
+      const importW = Number.isFinite(vbWidth) && vbWidth > 0 ? vbWidth : (innerw > 0 ? innerw : 100)
+      const importH = Number.isFinite(vbHeight) && vbHeight > 0 ? vbHeight : (innerh > 0 ? innerh : 100)
+      const safeImportW = Number.isFinite(importW) && importW > 0 ? importW : 100
+      const safeImportH = Number.isFinite(importH) && importH > 0 ? importH : 100
       ts =
-        innerh > innerw
-          ? 'scale(' + canvash / 3 / vb[3] + ')'
-          : 'scale(' + canvash / 3 / vb[2] + ')'
+        safeImportH > safeImportW
+          ? 'scale(' + canvash / 3 / safeImportH + ')'
+          : 'scale(' + canvash / 3 / safeImportW + ')'
 
       // Hack to make recalculateDimensions understand how to scale
-      ts = 'translate(0) ' + ts + ' translate(0)'
+      ts = `translate(0) ${ts} translate(0)`
 
       symbol = svgCanvas.getDOMDocument().createElementNS(NS.SVG, 'symbol')
       const defs = findDefs()
@@ -726,10 +771,10 @@ const importSvgString = (xmlString, preserveDimension) => {
     useEl = svgCanvas.getDOMDocument().createElementNS(NS.SVG, 'use')
     useEl.id = svgCanvas.getNextId()
     svgCanvas.setHref(useEl, '#' + symbol.id)
-      ; (
-        svgCanvas.getCurrentGroup() ||
+    ; (
+      svgCanvas.getCurrentGroup() ||
         svgCanvas.getCurrentDrawing().getCurrentLayer()
-      ).append(useEl)
+    ).append(useEl)
     batchCmd.addSubCommand(new InsertElementCommand(useEl))
     svgCanvas.clearSelection()
 
@@ -748,7 +793,7 @@ const importSvgString = (xmlString, preserveDimension) => {
     svgCanvas.addCommandToHistory(batchCmd)
     svgCanvas.call('changed', [svgCanvas.getSvgContent()])
   } catch (e) {
-    console.error(e)
+    error('Error importing SVG string', e, 'svg-exec')
     return null
   }
 
@@ -875,8 +920,8 @@ const convertImagesToBase64 = async svgElement => {
           }
           reader.readAsDataURL(blob)
         })
-      } catch (error) {
-        console.error('Failed to fetch image:', error)
+      } catch (err) {
+        error('Failed to fetch image', err, 'svg-exec')
       }
     }
   })
@@ -915,10 +960,14 @@ const rasterExport = (
 
         const canvas = document.createElement('canvas')
         const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          reject(new Error('Canvas 2D context not available'))
+          return
+        }
 
-        const width = svgElement.clientWidth || svgElement.getAttribute('width')
-        const height =
-          svgElement.clientHeight || svgElement.getAttribute('height')
+        const res = svgCanvas.getResolution()
+        const width = res.w
+        const height = res.h
         canvas.width = width
         canvas.height = height
 
@@ -1023,7 +1072,7 @@ const exportPDF = (
         }
 
         img.onerror = err => {
-          console.error('Failed to load SVG into image element:', err)
+          error('Failed to load SVG into image element', err, 'svg-exec')
           reject(err)
         }
 
@@ -1122,7 +1171,7 @@ const uniquifyElemsMethod = g => {
       let j = attrs.length
       while (j--) {
         const attr = attrs[j]
-        attr.ownerElement.setAttribute(attr.name, 'url(#' + newid + ')')
+        attr.ownerElement.setAttribute(attr.name, `url(#${newid})`)
       }
 
       // remap all href attributes
@@ -1152,7 +1201,11 @@ const setUseDataMethod = parent => {
 
   Array.prototype.forEach.call(elems, (el, _) => {
     const dataStorage = svgCanvas.getDataStorage()
-    const id = svgCanvas.getHref(el).substr(1)
+    const href = svgCanvas.getHref(el)
+    if (!href || !href.startsWith('#')) {
+      return
+    }
+    const id = href.substr(1)
     const refElem = svgCanvas.getElement(id)
     if (!refElem) {
       return
@@ -1310,6 +1363,41 @@ const convertGradientsMethod = elem => {
         grad.setAttribute('y1', (gCoords.y1 - bb.y) / bb.height)
         grad.setAttribute('x2', (gCoords.x2 - bb.x) / bb.width)
         grad.setAttribute('y2', (gCoords.y2 - bb.y) / bb.height)
+        grad.removeAttribute('gradientUnits')
+      } else if (grad.tagName === 'radialGradient') {
+        const getNum = (value, fallback) => {
+          const num = Number(value)
+          return Number.isFinite(num) ? num : fallback
+        }
+        let cx = getNum(grad.getAttribute('cx'), 0.5)
+        let cy = getNum(grad.getAttribute('cy'), 0.5)
+        let r = getNum(grad.getAttribute('r'), 0.5)
+        let fx = getNum(grad.getAttribute('fx'), cx)
+        let fy = getNum(grad.getAttribute('fy'), cy)
+
+        // If has transform, convert
+        const tlist = getTransformList(grad)
+        if (tlist?.numberOfItems > 0) {
+          const m = transformListToTransform(tlist).matrix
+          const cpt = transformPoint(cx, cy, m)
+          const fpt = transformPoint(fx, fy, m)
+          const rpt = transformPoint(cx + r, cy, m)
+          cx = cpt.x
+          cy = cpt.y
+          fx = fpt.x
+          fy = fpt.y
+          r = Math.hypot(rpt.x - cpt.x, rpt.y - cpt.y)
+          grad.removeAttribute('gradientTransform')
+        }
+
+        if (!bb.width || !bb.height) {
+          return
+        }
+        grad.setAttribute('cx', (cx - bb.x) / bb.width)
+        grad.setAttribute('cy', (cy - bb.y) / bb.height)
+        grad.setAttribute('fx', (fx - bb.x) / bb.width)
+        grad.setAttribute('fy', (fy - bb.y) / bb.height)
+        grad.setAttribute('r', r / Math.max(bb.width, bb.height))
         grad.removeAttribute('gradientUnits')
       }
     }

@@ -201,6 +201,11 @@ class EditorStartup {
     this.svgCanvas.bind('contextset', this.contextChanged.bind(this))
     this.svgCanvas.bind('extension_added', this.extAdded.bind(this))
     this.svgCanvas.bind('elementRenamed', this.elementRenamed.bind(this))
+    this.svgCanvas.bind('clipboardChanged', this.enableOrDisableClipboard.bind(this))
+    this.svgCanvas.bind(
+      'resolveClipboardConflicts',
+      this.resolveClipboardConflicts.bind(this)
+    )
 
     this.svgCanvas.bind('beforeClear', this.beforeClear.bind(this))
     this.svgCanvas.bind('afterClear', this.afterClear.bind(this))
@@ -606,12 +611,6 @@ class EditorStartup {
     this.canvMenu.setAttribute('enablemenuitems', '#delete,#cut,#copy')
 
     this.enableOrDisableClipboard()
-
-    window.addEventListener('storage', function (e) {
-      if (e.key !== 'svgedit_clipboard') { return }
-
-      this.enableOrDisableClipboard()
-    }.bind(this))
 
     window.addEventListener('beforeunload', function (e) {
     // Suppress warning if page is empty

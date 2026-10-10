@@ -418,7 +418,10 @@ class TopPanel {
         }
       }
       menuItems.setAttribute(
-        (tagName === 'g' ? 'en' : 'dis') + 'ablemenuitems',
+        // A <use> referencing a local <symbol> is how imported SVG content
+        // is represented, and is ungroupable just like a <g> (see
+        // ungroupSelectedElement()); it shouldn't be locked out of the menu.
+        (tagName === 'g' || tagName === 'use' ? 'en' : 'dis') + 'ablemenuitems',
         '#ungroup'
       )
       menuItems.setAttribute(

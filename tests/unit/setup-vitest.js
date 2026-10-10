@@ -1,4 +1,5 @@
 import { AssertionError, strict as assert } from 'node:assert'
+import { JSDOM } from 'jsdom'
 
 // Provide a global assert (some legacy tests expect it).
 globalThis.assert = assert
@@ -21,6 +22,11 @@ globalThis.after = globalThis.afterAll
 
 // JSDOM lacks many SVG APIs; provide minimal stubs used in tests.
 const win = globalThis.window || globalThis
+
+// Node 26 exposes storage globals that can shadow JSDOM storage.
+const storageWindow = win.localStorage ? win : new JSDOM('', { url: 'http://localhost/' }).window
+Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: storageWindow.localStorage })
+Object.defineProperty(globalThis, 'sessionStorage', { configurable: true, value: storageWindow.sessionStorage })
 
 // Simple SVG matrix/transform/point polyfills good enough for unit tests.
 class SVGMatrixPolyfill {

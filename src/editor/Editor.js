@@ -1166,16 +1166,36 @@ class Editor extends EditorStartup {
    * @returns {void}
    */
   enableOrDisableClipboard () {
-    let svgeditClipboard
-    try {
-      svgeditClipboard = this.localStorage.getItem('svgedit_clipboard')
-    } catch (err) {
-      /* empty fn */
-    }
+    const hasClipboardData = this.svgCanvas.hasClipboardData()
     this.canvMenu.setAttribute(
-      (svgeditClipboard ? 'en' : 'dis') + 'ablemenuitems',
+      (hasClipboardData ? 'en' : 'dis') + 'ablemenuitems',
       '#paste,#paste_in_place'
     )
+  }
+
+  /**
+   * Asks how direct use-target conflicts should be resolved during paste.
+   * @param {Window} _win
+   * @param {{conflicts: string[]}} conflictInfo
+   * @returns {Promise<'use-existing'|'replace-existing'|'keep-both'|'cancel'>}
+   */
+  async resolveClipboardConflicts (_win, { conflicts = [] } = {}) {
+    const useExisting = this.i18next.t('notification.clipboardUseExisting')
+    const replaceExisting = this.i18next.t('notification.clipboardReplaceExisting')
+    const keepBoth = this.i18next.t('notification.clipboardKeepBoth')
+    const message = this.i18next.t('notification.clipboardDefsConflict', {
+      ids: conflicts.join(', ')
+    })
+    const response = await seConfirm(message, [
+      useExisting,
+      replaceExisting,
+      keepBoth
+    ])
+
+    if (response === useExisting) return 'use-existing'
+    if (response === replaceExisting) return 'replace-existing'
+    if (response === keepBoth) return 'keep-both'
+    return 'cancel'
   }
 
   /**

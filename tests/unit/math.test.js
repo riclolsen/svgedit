@@ -18,6 +18,9 @@ describe('math', function () {
     assert.ok(math, 'math module should exist')
     const expectedFunctions = [
       'transformPoint',
+      'normalizeRotationAngle',
+      'getRotationCenterFromRotateTransform',
+      'getRotationTransformSummary',
       'getTransformList',
       'isIdentity',
       'matrixMultiply',
@@ -34,6 +37,57 @@ describe('math', function () {
         `Expected "${fn}" to be a function`
       )
     })
+    assert.equal(math.NEAR_ZERO, 1e-10, 'Expected shared numeric tolerance')
+  })
+
+  it('normalizes rotation angles consistently', function () {
+    assert.equal(math.normalizeRotationAngle(540), 180)
+    assert.equal(math.normalizeRotationAngle(-180), 180)
+    assert.equal(math.normalizeRotationAngle('450'), 90)
+    assert.equal(math.normalizeRotationAngle(1e-12), 0)
+    assert.equal(math.normalizeRotationAngle('invalid'), 0)
+  })
+
+  it('recovers a rotation center from the transform matrix', function () {
+    const transform = svg.createSVGTransform()
+    transform.setRotate(45, 30, 40)
+    const center = math.getRotationCenterFromRotateTransform({
+      type: SVGTransform.SVG_TRANSFORM_ROTATE,
+      angle: transform.angle,
+      matrix: transform.matrix
+    })
+
+    assert.closeTo(center.x, 30, 1e-10)
+    assert.closeTo(center.y, 40, 1e-10)
+  })
+
+  it('rejects non-rotation transforms when reading a rotation center', function () {
+    const transform = svg.createSVGTransform()
+    transform.setMatrix(svg.createSVGMatrix().scale(2))
+
+    assert.throws(
+      () => math.getRotationCenterFromRotateTransform(transform),
+      TypeError,
+      'Expected an SVG rotation transform'
+    )
+  })
+
+  it('summarizes compound rotations from a transform list', function () {
+    const rect = document.createElementNS(NS.SVG, 'rect')
+    svg.appendChild(rect)
+    const first = svg.createSVGTransform()
+    first.setRotate(120, 30, 40)
+    const second = svg.createSVGTransform()
+    second.setRotate(90, 50, 60)
+    rect.transform.baseVal.appendItem(first)
+    rect.transform.baseVal.appendItem(second)
+
+    const summary = math.getRotationTransformSummary(rect.transform.baseVal)
+
+    assert.equal(summary.rotationAngle, -150)
+    assert.closeTo(summary.rotationCenter.x, 30, 1e-10)
+    assert.closeTo(summary.rotationCenter.y, 40, 1e-10)
+    rect.remove()
   })
 
   it('Test svgedit.math.transformPoint() function', function () {
@@ -93,6 +147,14 @@ describe('math', function () {
       'Modified matrix matching identity values should be identity'
     )
 
+    const mAlmostIdentity = svg.createSVGMatrix()
+    mAlmostIdentity.a = 1 + 5e-11
+    mAlmostIdentity.f = 5e-11
+    assert.ok(
+      isIdentity(mAlmostIdentity),
+      'Matrix close to identity should be considered identity'
+    )
+
     m.e = 10
     assert.notOk(isIdentity(m), 'Matrix with translation is not identity')
   })
@@ -106,6 +168,22 @@ describe('math', function () {
       isIdentity(iDefault),
       'No arguments should return identity matrix'
     )
+
+    // Ensure single matrix returns a new matrix and does not mutate the input
+    const tiny = svg.createSVGMatrix()
+    tiny.b = 1e-12
+    const tinyResult = matrixMultiply(tiny)
+    assert.notStrictEqual(
+      tinyResult,
+      tiny,
+      'Single-argument call should return a new matrix instance'
+    )
+    assert.equal(
+      tiny.b,
+      1e-12,
+      'Input matrix should not be mutated by rounding'
+    )
+    assert.equal(tinyResult.b, 0, 'Result should round near-zero values to 0')
 
     // Translate there and back
     const tr1 = svg.createSVGMatrix().translate(100, 50)
@@ -316,5 +394,31 @@ describe('math', function () {
       rectsIntersect(r1, r4),
       'Rectangles touching at the edge should not be considered intersecting'
     )
+  })
+
+  it('Test svgedit.math.rectsIntersect() with zero width', function () {
+    const { rectsIntersect } = math
+    const r1 = { x: 0, y: 0, width: 0, height: 50 }
+    const r2 = { x: 0, y: 0, width: 50, height: 50 }
+
+    const result = rectsIntersect(r1, r2)
+    assert.ok(result !== undefined)
+  })
+
+  it('Test svgedit.math.rectsIntersect() with zero height', function () {
+    const { rectsIntersect } = math
+    const r1 = { x: 0, y: 0, width: 50, height: 0 }
+    const r2 = { x: 0, y: 0, width: 50, height: 50 }
+
+    const result = rectsIntersect(r1, r2)
+    assert.ok(result !== undefined)
+  })
+
+  it('Test svgedit.math.rectsIntersect() with negative coords', function () {
+    const { rectsIntersect } = math
+    const r1 = { x: -50, y: -50, width: 100, height: 100 }
+    const r2 = { x: 0, y: 0, width: 50, height: 50 }
+
+    assert.ok(rectsIntersect(r1, r2), 'Should intersect with negative coordinates')
   })
 })

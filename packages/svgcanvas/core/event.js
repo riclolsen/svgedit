@@ -14,13 +14,16 @@ import {
 import {
   transformPoint, hasMatrixTransform, getMatrix, snapToAngle, getTransformList
 } from './math.js'
+import { withStartTransform } from './recalculate.js'
 import * as draw from './draw.js'
 import * as pathModule from './path.js'
 import * as hstry from './history.js'
 import { findPos } from '../../svgcanvas/common/util.js'
 
 const {
-  InsertElementCommand
+  InsertElementCommand,
+  BatchCommand,
+  ChangeElementCommand
 } = hstry
 
 let svgCanvas = null
@@ -77,18 +80,38 @@ const getBsplinePoint = (t) => {
   }
 }
 
-// update the dummy transform in our transform list
-// to be a translate. We need to check if there was a transformation
-// to avoid loosing it
+const beginDragTransform = (svgRoot, selectedElements) => {
+  svgCanvas.dragStartTransforms = new Map()
+  for (const selectedElement of selectedElements) {
+    if (!selectedElement) { continue }
+    svgCanvas.dragStartTransforms.set(
+      selectedElement,
+      selectedElement.getAttribute('transform') || ''
+    )
+    const tlist = getTransformList(selectedElement)
+    if (!tlist) { continue }
+    const xform = svgRoot.createSVGTransform()
+    xform.setTranslate(0, 0)
+    if (tlist.numberOfItems) {
+      tlist.insertItemBefore(xform, 0)
+    } else {
+      tlist.appendItem(xform)
+    }
+  }
+  svgCanvas.hasDragStartTransform = true
+}
+
+// Update only the temporary drag transform inserted at index 0.
 const updateTransformList = (svgRoot, element, dx, dy) => {
   const xform = svgRoot.createSVGTransform()
   xform.setTranslate(dx, dy)
   const tlist = getTransformList(element)
+  if (!tlist) { return }
   if (tlist.numberOfItems) {
-    const firstItem = tlist.getItem(0)
-    if (firstItem.type === 2) { // SVG_TRANSFORM_TRANSLATE = 2
+    if (typeof tlist.replaceItem === 'function') {
       tlist.replaceItem(xform, 0)
     } else {
+      tlist.removeItem(0)
       tlist.insertItemBefore(xform, 0)
     }
   } else {
@@ -158,13 +181,16 @@ const mouseMoveEvent = (evt) => {
           dy = snapToGrid(dy)
         }
 
-        // Enable moving selection only if mouse has been moved at least 4 px in any direction
+        // Enable moving selection only if the pointer moved more than 4 px.
         // This prevents objects from being accidentally moved when (initially) selected
         const deltaThreshold = 4
         const deltaThresholdReached = Math.abs(dx) > deltaThreshold || Math.abs(dy) > deltaThreshold
         moveSelectionThresholdReached = moveSelectionThresholdReached || deltaThresholdReached
 
         if (moveSelectionThresholdReached) {
+          if (!svgCanvas.hasDragStartTransform) {
+            beginDragTransform(svgRoot, selectedElements)
+          }
           selectedElements.forEach((el) => {
             if (el) {
               updateTransformList(svgRoot, el, dx, dy)
@@ -224,6 +250,7 @@ const mouseMoveEvent = (evt) => {
       // while the mouse is down, when mouse goes up, we use this to recalculate
       // the shape's coordinates
       tlist = getTransformList(selected)
+      if (!tlist) { break }
       const hasMatrix = hasMatrixTransform(tlist)
       box = hasMatrix ? svgCanvas.getInitBbox() : getBBox(selected)
       let left = box.x
@@ -552,10 +579,21 @@ const mouseMoveEvent = (evt) => {
 *
 * @returns {void}
 */
-const mouseOutEvent = () => {
+const mouseOutEvent = (evt) => {
   const { $id } = svgCanvas
   if (svgCanvas.getCurrentMode() !== 'select' && svgCanvas.getStarted()) {
-    const event = new Event('mouseup')
+    const event = new MouseEvent('mouseup', {
+      bubbles: true,
+      cancelable: true,
+      clientX: evt?.clientX ?? 0,
+      clientY: evt?.clientY ?? 0,
+      button: evt?.button ?? 0,
+      buttons: evt?.buttons ?? 0,
+      altKey: evt?.altKey ?? false,
+      ctrlKey: evt?.ctrlKey ?? false,
+      metaKey: evt?.metaKey ?? false,
+      shiftKey: evt?.shiftKey ?? false
+    })
     $id('svgcanvas').dispatchEvent(event)
   }
 }
@@ -575,6 +613,7 @@ const mouseOutEvent = () => {
 */
 const mouseUpEvent = (evt) => {
   evt.preventDefault()
+  const didMoveSelection = moveSelectionThresholdReached || Boolean(svgCanvas.dragStartTransforms)
   moveSelectionThresholdReached = false
   if (evt.button === 2) { return }
   if (!svgCanvas.getStarted()) { return }
@@ -603,7 +642,8 @@ const mouseUpEvent = (evt) => {
   const useUnit = false // (svgCanvas.getCurConfig().baseUnit !== 'px');
   svgCanvas.setStarted(false)
   let t
-  switch (svgCanvas.getCurrentMode()) {
+  const mouseUpMode = svgCanvas.getCurrentMode()
+  switch (mouseUpMode) {
     // intentionally fall-through to select here
     case 'resize':
     case 'multiselect':
@@ -641,10 +681,64 @@ const mouseUpEvent = (evt) => {
           }
           svgCanvas.selectorManager.requestSelector(selected).showGrips(true)
         }
-        // always recalculate dimensions to strip off stray identity transforms
-        svgCanvas.recalculateAllSelectedDimensions()
         // if it was being dragged/resized
-        if (realX !== svgCanvas.getRStartX() || realY !== svgCanvas.getRStartY()) {
+        const hasPointerDelta = realX !== svgCanvas.getRStartX() || realY !== svgCanvas.getRStartY()
+        const shouldCommitTransform = mouseUpMode === 'select'
+          ? didMoveSelection
+          : hasPointerDelta
+        if (shouldCommitTransform) {
+          // Only recalculate dimensions after actual dragging/resizing to avoid
+          // unwanted transform flattening on simple clicks
+
+          // Create a single batch command for all moved elements
+          const batchCmd = new BatchCommand('position')
+          const changedElements = []
+
+          selectedElements.forEach((elem) => {
+            if (!elem) return
+
+            const tlist = getTransformList(elem)
+            if (!tlist || tlist.numberOfItems === 0) return
+
+            // Get the transform from BEFORE this interaction started. `dragStartTransforms`
+            // is only populated for 'select'-mode (move) drags; 'resize'/'rotate' drags fall
+            // through to this same code with dragStartTransforms left null, so fall back to
+            // the value captured at mousedown via setStartTransform, which correctly reflects
+            // the prior transform (e.g. a matrix left by an earlier move) regardless of mode.
+            const oldTransform = svgCanvas.dragStartTransforms?.has(elem)
+              ? svgCanvas.dragStartTransforms.get(elem)
+              : (svgCanvas.getStartTransform() || '')
+
+            // recalculateDimensions uses startTransform when building its undo command.
+            // Set it per element so multi-selection preserves every original transform.
+            const cmd = withStartTransform(
+              svgCanvas,
+              oldTransform,
+              () => svgCanvas.recalculateDimensions(elem)
+            )
+            if (cmd) {
+              batchCmd.addSubCommand(cmd)
+              changedElements.push(elem)
+            } else {
+              const newTransform = elem.getAttribute('transform') || ''
+              if (newTransform !== oldTransform) {
+                batchCmd.addSubCommand(new ChangeElementCommand(elem, { transform: oldTransform }))
+                changedElements.push(elem)
+              }
+            }
+          })
+
+          if (!batchCmd.isEmpty()) {
+            svgCanvas.addCommandToHistory(batchCmd)
+          }
+          if (changedElements.length) {
+            svgCanvas.call('changed', changedElements)
+          }
+
+          // Clear the stored transforms AND reset the flag together
+          svgCanvas.dragStartTransforms = null
+          svgCanvas.hasDragStartTransform = false
+
           const len = selectedElements.length
           for (let i = 0; i < len; ++i) {
             if (!selectedElements[i]) { break }
@@ -679,6 +773,9 @@ const mouseUpEvent = (evt) => {
             })
           }
         }
+      }
+      if (mouseUpMode === 'multiselect' && selectedElements.some(Boolean)) {
+        svgCanvas.call('selected', selectedElements)
       }
       return
     case 'zoom': {
@@ -803,6 +900,8 @@ const mouseUpEvent = (evt) => {
       svgCanvas.textActions.mouseUp(evt, mouseX, mouseY)
       break
     case 'rotate': {
+      svgCanvas.hasDragStartTransform = false
+      svgCanvas.dragStartTransforms = null
       keep = true
       element = null
       svgCanvas.setCurrentMode('select')
@@ -816,8 +915,13 @@ const mouseUpEvent = (evt) => {
       break
     } default:
       // This could occur in an extension
+      svgCanvas.hasDragStartTransform = false
+      svgCanvas.dragStartTransforms = null
       break
   }
+  // Reset drag flag after any mouseUp
+  svgCanvas.hasDragStartTransform = false
+  svgCanvas.dragStartTransforms = null
 
   /**
 * The main (left) mouse button is released (anywhere).
@@ -983,8 +1087,10 @@ const mouseDownEvent = (evt) => {
     svgCanvas.cloneSelectedElements(0, 0)
   }
 
-  const container = svgCanvas.getCurrentGroup() || svgCanvas.getCurrentDrawing().getCurrentLayer();
-  svgCanvas.setRootSctm(container.getScreenCTM().inverse());
+  const container = svgCanvas.getCurrentGroup() || svgCanvas.getCurrentDrawing().getCurrentLayer()
+  const screenCTM = container?.getScreenCTM?.()
+  if (!screenCTM) return
+  svgCanvas.setRootSctm(screenCTM.inverse())
 
   const pt = transformPoint(evt.clientX, evt.clientY, svgCanvas.getrootSctm())
   const mouseX = pt.x * zoom
@@ -1046,13 +1152,6 @@ const mouseDownEvent = (evt) => {
   svgCanvas.setStartTransform(mouseTarget.getAttribute('transform'))
 
   const tlist = getTransformList(mouseTarget)
-  // consolidate transforms using standard SVG but keep the transformation used for the move/scale
-  if (tlist.numberOfItems > 1) {
-    const firstTransform = tlist.getItem(0)
-    tlist.removeItem(0)
-    tlist.consolidate()
-    tlist.insertItemBefore(firstTransform, 0)
-  }
   switch (svgCanvas.getCurrentMode()) {
     case 'select':
       svgCanvas.setStarted(true)
@@ -1074,19 +1173,9 @@ const mouseDownEvent = (evt) => {
         }
         // else if it's a path, go into pathedit mode in mouseup
 
-        if (!rightClick) {
-          // insert a dummy transform so if the element(s) are moved it will have
-          // a transform to use for its translate
-          for (const selectedElement of selectedElements) {
-            if (!selectedElement) { continue }
-            const slist = getTransformList(selectedElement)
-            if (slist.numberOfItems) {
-              slist.insertItemBefore(svgRoot.createSVGTransform(), 0)
-            } else {
-              slist.appendItem(svgRoot.createSVGTransform())
-            }
-          }
-        }
+        // Note: Dummy transform insertion moved to mouseMove to avoid triggering
+        // recalculateDimensions on simple clicks. The dummy transform is only needed
+        // when actually starting a drag operation.
       } else if (!rightClick) {
         svgCanvas.clearSelection()
         svgCanvas.setCurrentMode('multiselect')
@@ -1112,13 +1201,14 @@ const mouseDownEvent = (evt) => {
       }
       assignAttributes(svgCanvas.getRubberBox(), {
         x: realX * zoom,
-        y: realX * zoom,
+        y: realY * zoom,
         width: 0,
         height: 0,
         display: 'inline'
       }, 100)
       break
     case 'resize': {
+      if (!tlist) { break }
       svgCanvas.setStarted(true)
       svgCanvas.setStartX(x)
       svgCanvas.setStartY(y)
@@ -1346,8 +1436,10 @@ const DOMMouseScrollEvent = (e) => {
 
   e.preventDefault()
 
-  // svgCanvas.setRootSctm($id('svgcontent').querySelector('g').getScreenCTM().inverse())
-  svgCanvas.setRootSctm($id('svgcontent').getScreenCTM().inverse())
+  const container = $id('svgcontent')
+  const screenCTM = container?.getScreenCTM?.()
+  if (!screenCTM) return
+  svgCanvas.setRootSctm(screenCTM.inverse())
 
   const workarea = document.getElementById('workarea')
   const scrbar = 15

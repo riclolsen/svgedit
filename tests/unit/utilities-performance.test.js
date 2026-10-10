@@ -80,7 +80,7 @@ describe('utilities performance', function () {
    * @param {module:utilities.SVGElementJSON} jsonMap
    * @returns {SVGElement}
    */
-  function mockCreateSVGElement(jsonMap) {
+  function mockCreateSVGElement (jsonMap) {
     const elem = document.createElementNS(NS.SVG, jsonMap.element)
     Object.entries(jsonMap.attr).forEach(([attr, value]) => {
       elem.setAttribute(attr, value)
@@ -93,7 +93,7 @@ describe('utilities performance', function () {
    * @param {module:utilities.SVGElementJSON} json
    * @returns {SVGElement}
    */
-  function mockaddSVGElementsFromJson(json) {
+  function mockaddSVGElementsFromJson (json) {
     const elem = mockCreateSVGElement(json)
     currentLayer.append(elem)
     return elem
@@ -105,7 +105,7 @@ describe('utilities performance', function () {
    * @param {Integer} count
    * @returns {void}
    */
-  function fillDocumentByCloningElement(elem, count) {
+  function fillDocumentByCloningElement (elem, count) {
     const elemId = elem.getAttribute('id') + '-'
     for (let index = 0; index < count; index++) {
       const clone = elem.cloneNode(true) // t: deep clone
@@ -117,7 +117,7 @@ describe('utilities performance', function () {
   }
 
   const mockPathActions = {
-    resetOrientation(path) {
+    resetOrientation (path) {
       if (path?.nodeName !== 'path') { return false }
       const tlist = path.transform.baseVal
       const m = math.transformListToTransform(tlist).matrix

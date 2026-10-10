@@ -37,7 +37,7 @@ describe('draw.Drawing', function () {
      */
     {
       // used by units.shortFloat - call path: cloneLayer -> copyElem -> convertPath -> pathDSegment -> shortFloat
-      getRoundDigits() { return 6 }
+      getRoundDigits () { return 6 }
     }
   )
 
@@ -62,7 +62,7 @@ describe('draw.Drawing', function () {
    * @param {module:utilities.SVGElementJSON} jsonMap
    * @returns {SVGElement}
    */
-  function createSVGElement(jsonMap) {
+  function createSVGElement (jsonMap) {
     const elem = document.createElementNS(NS.SVG, jsonMap.element)
     Object.entries(jsonMap.attr).forEach(([attr, value]) => {
       elem.setAttribute(attr, value)
@@ -446,7 +446,7 @@ describe('draw.Drawing', function () {
 
   it('Test setCurrentLayerName()', function () {
     const mockHrService = {
-      changeElement() {
+      changeElement () {
         // empty
       }
     }
@@ -479,9 +479,9 @@ describe('draw.Drawing', function () {
 
   it('Test createLayer()', function () {
     const mockHrService = {
-      startBatchCommand() { /* empty fn */ },
-      endBatchCommand() { /* empty fn */ },
-      insertElement() { /* empty fn */ }
+      startBatchCommand () { /* empty fn */ },
+      endBatchCommand () { /* empty fn */ },
+      insertElement () { /* empty fn */ }
     }
     addOwnSpies(mockHrService)
 
@@ -509,10 +509,10 @@ describe('draw.Drawing', function () {
 
   it('Test mergeLayer()', function () {
     const mockHrService = {
-      startBatchCommand() { /* empty fn */ },
-      endBatchCommand() { /* empty fn */ },
-      moveElement() { /* empty fn */ },
-      removeElement() { /* empty fn */ }
+      startBatchCommand () { /* empty fn */ },
+      endBatchCommand () { /* empty fn */ },
+      moveElement () { /* empty fn */ },
+      removeElement () { /* empty fn */ }
     }
     addOwnSpies(mockHrService)
 
@@ -546,10 +546,10 @@ describe('draw.Drawing', function () {
 
   it('Test mergeLayer() when no previous layer to merge', function () {
     const mockHrService = {
-      startBatchCommand() { /* empty fn */ },
-      endBatchCommand() { /* empty fn */ },
-      moveElement() { /* empty fn */ },
-      removeElement() { /* empty fn */ }
+      startBatchCommand () { /* empty fn */ },
+      endBatchCommand () { /* empty fn */ },
+      moveElement () { /* empty fn */ },
+      removeElement () { /* empty fn */ }
     }
     addOwnSpies(mockHrService)
 
@@ -579,10 +579,10 @@ describe('draw.Drawing', function () {
 
   it('Test mergeAllLayers()', function () {
     const mockHrService = {
-      startBatchCommand() { /* empty fn */ },
-      endBatchCommand() { /* empty fn */ },
-      moveElement() { /* empty fn */ },
-      removeElement() { /* empty fn */ }
+      startBatchCommand () { /* empty fn */ },
+      endBatchCommand () { /* empty fn */ },
+      moveElement () { /* empty fn */ },
+      removeElement () { /* empty fn */ }
     }
     addOwnSpies(mockHrService)
 
@@ -622,9 +622,9 @@ describe('draw.Drawing', function () {
 
   it('Test cloneLayer()', function () {
     const mockHrService = {
-      startBatchCommand() { /* empty fn */ },
-      endBatchCommand() { /* empty fn */ },
-      insertElement() { /* empty fn */ }
+      startBatchCommand () { /* empty fn */ },
+      endBatchCommand () { /* empty fn */ },
+      insertElement () { /* empty fn */ }
     }
     addOwnSpies(mockHrService)
 
@@ -666,6 +666,24 @@ describe('draw.Drawing', function () {
     const g = clone.childNodes[4]
     assert.equal(g.childNodes.length, 1)
     assert.equal(g.id, 'svg_4')
+
+    cleanupSVG(svg)
+  })
+
+  it('Test cloneLayer() with non-element nodes', function () {
+    const drawing = new draw.Drawing(svg)
+    const layers = setupSVGWith3Layers(svg)
+    const layer3 = layers[2]
+    createSomeElementsInGroup(layer3)
+    layer3.insertBefore(document.createTextNode('\n  '), layer3.childNodes[1])
+    layer3.append(document.createComment('test-comment'))
+    drawing.identifyLayers()
+
+    const clone = drawing.cloneLayer('clone2')
+
+    assert.ok(clone)
+    assert.ok([...clone.childNodes].some(node => node.nodeType === Node.TEXT_NODE))
+    assert.ok([...clone.childNodes].some(node => node.nodeType === Node.COMMENT_NODE))
 
     cleanupSVG(svg)
   })
