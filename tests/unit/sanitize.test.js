@@ -42,6 +42,22 @@ describe('sanitize', function () {
     assert.equal(rect.hasAttribute('vector-effect'), false)
   })
 
+  it('sanitizeSvg() preserves local inherited marker references and removes external ones', () => {
+    const group = createSvgElement('g')
+    group.setAttribute('style', 'marker: url(#arrow); marker-start: url(#start)')
+    group.setAttribute('marker-end', 'url(https://example.com/arrows.svg#end)')
+    svg.append(group)
+    sanitize.sanitizeSvg(group)
+
+    expect(group.getAttribute('marker')).toBe('url(#arrow)')
+    expect(group.getAttribute('marker-start')).toBe('url(#start)')
+    expect(group.hasAttribute('marker-end')).toBe(false)
+
+    group.setAttribute('marker', 'url(https://example.com/arrows.svg#arrow)')
+    sanitize.sanitizeSvg(group)
+    expect(group.hasAttribute('marker')).toBe(false)
+  })
+
   it('sanitizeSvg() removes disallowed attributes but keeps data-*', function () {
     const rect = createSvgElement('rect')
     rect.setAttribute('onclick', 'alert(1)')

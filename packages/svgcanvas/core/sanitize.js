@@ -20,7 +20,7 @@ const FONT_ATTRIBUTES = ['font-family', 'font-size', 'font-stretch', 'font-style
  * @type {PlainObject}
  */
 /* eslint-disable max-len */
-const svgGenericWhiteList = ['class', 'id', 'display', 'transform', 'style', 'onload']
+const svgGenericWhiteList = ['class', 'id', 'display', 'transform', 'style', 'onload', 'marker', 'marker-start', 'marker-mid', 'marker-end']
 const svgWhiteList_ = {
   // SVG Elements
   a: ['clip-path', 'clip-rule', 'fill', 'fill-opacity', 'fill-rule', 'filter', 'href', 'mask', 'opacity', 'stroke', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity', 'stroke-width', 'systemLanguage', 'xlink:href', 'xlink:title'],
@@ -48,7 +48,7 @@ const svgWhiteList_ = {
   ],
   line: ['clip-path', 'clip-rule', 'fill', 'fill-opacity', 'fill-rule', 'filter', 'marker-end', 'marker-mid', 'marker-start', 'mask', 'opacity', 'requiredFeatures', 'stroke', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity', 'stroke-width', 'systemLanguage', 'x1', 'x2', 'y1', 'y2'],
   linearGradient: ['gradientTransform', 'gradientUnits', 'requiredFeatures', 'spreadMethod', 'systemLanguage', 'x1', 'x2', 'href', 'xlink:href', 'y1', 'y2'],
-  marker: ['markerHeight', 'markerUnits', 'markerWidth', 'orient', 'preserveAspectRatio', 'refX', 'refY', 'se_type', 'systemLanguage', 'viewBox'],
+  marker: [...FONT_ATTRIBUTES, 'clip-path', 'clip-rule', 'color', 'fill', 'fill-opacity', 'fill-rule', 'filter', 'markerHeight', 'markerUnits', 'markerWidth', 'mask', 'opacity', 'orient', 'overflow', 'preserveAspectRatio', 'refX', 'refY', 'se_type', 'stroke', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity', 'stroke-width', 'systemLanguage', 'viewBox'],
   mask: ['height', 'maskContentUnits', 'maskUnits', 'width', 'x', 'y'],
   metadata: [],
   namedview: [],
@@ -291,7 +291,7 @@ export const sanitizeSvg = (node) => {
     }
     // if the element has attributes pointing to a non-local reference,
     // need to remove the attribute
-    ['clip-path', 'fill', 'filter', 'marker-end', 'marker-mid', 'marker-start', 'mask', 'stroke'].forEach((attr) => {
+    ['clip-path', 'fill', 'filter', 'marker', 'marker-end', 'marker-mid', 'marker-start', 'mask', 'stroke'].forEach((attr) => {
       let val = node.getAttribute(attr)
       if (val) {
         val = getUrlFromAttr(val)

@@ -1,5 +1,5 @@
 /* eslint-disable max-len, no-console */
-import SvgCanvas from '../../packages/svgcanvas'
+import SvgCanvas from '../../packages/svgcanvas/svgcanvas.js'
 
 describe('Serialization Module', function () {
   let svgCanvas
@@ -42,6 +42,58 @@ describe('Serialization Module', function () {
     console.log(`--- End ${testName} ---`)
     return output
   }
+
+  it('preserves marker definitions, presentation and inherited references across repeated saves', () => {
+    const initialSvg = `<svg width="640" height="480" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse"
+          refX="9" refY="4" orient="auto-start-reverse" viewBox="0 0 10 8"
+          fill="#f00" stroke="#00f" stroke-width="2" overflow="visible">
+          <path d="M0 0 L10 4 L0 8 Z"/>
+        </marker>
+        <marker id="unused" markerWidth="5" markerHeight="5" orient="auto">
+          <svg id="marker-content" width="5" height="5"><circle cx="2" cy="2" r="2"/></svg>
+        </marker>
+      </defs>
+      <g id="arrows" style="marker-start: url(#arrow); marker-mid: url(#arrow); marker-end: url(#arrow)">
+        <path id="marked-path" d="M20 20 L100 20 L150 80" stroke="#000" fill="none"/>
+      </g>
+      <line id="marked-line" x1="20" y1="100" x2="150" y2="100" marker-end="url(#arrow)"/>
+      <polyline id="marked-polyline" points="20,150 100,150 150,200" style="marker: url(#arrow)"/>
+    </svg>`
+    expect(svgCanvas.setSvgString(initialSvg)).toBe(true)
+
+    for (let i = 0; i < 3; i++) {
+      const output = svgCanvas.svgCanvasToString()
+      const doc = new DOMParser().parseFromString(output, 'image/svg+xml')
+      const arrow = doc.getElementById('arrow')
+      expect(doc.querySelectorAll('marker')).toHaveLength(2)
+      expect(doc.getElementById('unused').querySelector('#marker-content circle')).toBeTruthy()
+      for (const [attr, value] of Object.entries({
+        markerWidth: '10',
+        markerHeight: '8',
+        markerUnits: 'userSpaceOnUse',
+        refX: '9',
+        refY: '4',
+        orient: 'auto-start-reverse',
+        viewBox: '0 0 10 8',
+        fill: '#f00',
+        stroke: '#00f',
+        'stroke-width': '2',
+        overflow: 'visible'
+      })) {
+        expect(arrow.getAttribute(attr)).toBe(value)
+      }
+      expect(arrow.querySelector('path')).toBeTruthy()
+      for (const attr of ['marker-start', 'marker-mid', 'marker-end']) {
+        expect(doc.getElementById('arrows').getAttribute(attr)).toBe('url(#arrow)')
+      }
+      expect(doc.getElementById('marked-line').getAttribute('marker-end')).toBe('url(#arrow)')
+      expect(doc.getElementById('marked-polyline').getAttribute('marker')).toBe('url(#arrow)')
+      expect(svgCanvas.getSvgContent().querySelectorAll('marker')).toHaveLength(2)
+      expect(svgCanvas.setSvgString(output)).toBe(true)
+    }
+  })
 
   it('should not insert whitespace in user provided complex example', function () {
     const initialSvg = '<svg width="640" height="480" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd">' +

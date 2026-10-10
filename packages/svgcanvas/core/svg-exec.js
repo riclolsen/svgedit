@@ -1272,6 +1272,9 @@ const removeUnusedDefElemsMethod = () => {
     i = defelems.length
     while (i--) {
       const defelem = defelems[i]
+      // Markers are reusable document assets. Keep them and their contents even
+      // when no shape currently refers to them (references may also be inherited).
+      if (defelem.closest('marker')) continue
       const { id } = defelem
       if (!defelemUses.includes(id)) {
         // Not found, so remove (but remember)
