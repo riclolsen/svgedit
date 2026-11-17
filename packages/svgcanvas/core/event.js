@@ -1062,6 +1062,45 @@ const dblClickEvent = (evt) => {
 }
 
 /**
+ * The selectable objects stacked at a point of the screen, topmost first:
+ * the children of the current group (or layer) under the point.
+ * @param {Float} clientX
+ * @param {Float} clientY
+ * @returns {Element[]}
+ */
+const elementsAtPoint = (clientX, clientY) => {
+  const container = svgCanvas.getCurrentGroup() || svgCanvas.getCurrentDrawing().getCurrentLayer()
+  if (!container) return []
+  const stack = []
+  for (let el of document.elementsFromPoint(clientX, clientY)) {
+    if (el.correspondingUseElement) el = el.correspondingUseElement
+    if (el === container || !container.contains(el)) continue
+    while (el.parentNode !== container) el = el.parentNode
+    if (el.nodeName === 'title' || stack.includes(el)) continue
+    stack.push(el)
+  }
+  return stack
+}
+
+/**
+ * The object to select on Ctrl+click: the one under the selected object at
+ * that point, back to the topmost after the bottom one. Without a selected
+ * object there, the one under the topmost.
+ * @param {Float} clientX
+ * @param {Float} clientY
+ * @param {Element[]} selectedElements
+ * @returns {Element|null}
+ */
+const elementBelowAtPoint = (clientX, clientY, selectedElements) => {
+  const stack = elementsAtPoint(clientX, clientY)
+  if (stack.length === 0) return null
+  const selected = selectedElements.filter(Boolean)
+  const i = selected.length === 1 ? stack.indexOf(selected[0]) : -1
+  if (i === -1) return stack[Math.min(1, stack.length - 1)]
+  return stack[(i + 1) % stack.length]
+}
+
+/**
  * Follows these conditions:
  * - When we are in a create mode, the element is added to the canvas but the
  *   action is not recorded until mousing up.
@@ -1104,6 +1143,16 @@ const mouseDownEvent = (evt) => {
     }
     svgCanvas.setCurrentMode('select')
     svgCanvas.setLastClickPoint(pt)
+  }
+
+  // Ctrl+click (Cmd+click on macOS): select the object under the selected one
+  if (!rightClick && (evt.ctrlKey || evt.metaKey) && svgCanvas.getCurrentMode() === 'select') {
+    const below = elementBelowAtPoint(evt.clientX, evt.clientY, selectedElements)
+    if (below) {
+      svgCanvas.selectOnly([below], true)
+      svgCanvas.pathActions.clear()
+    }
+    return
   }
 
   let x = mouseX / zoom
