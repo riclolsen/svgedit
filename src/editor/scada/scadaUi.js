@@ -59,7 +59,7 @@ export class ScadaUI {
     document.head.appendChild(style)
 
     div.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:15px; border-bottom:1px solid #ddd; padding-bottom:10px;">
+        <div id="scada_header" title="Drag to move" style="display:flex; justify-content:space-between; align-items: center; margin-bottom:15px; border-bottom:1px solid #ddd; padding-bottom:10px; cursor: move; user-select: none; touch-action: none;">
             <div style="display: flex; flex-direction: column;">
                 <strong style="font-size: 1.2em; color: #333;">SCADA Animations</strong>
                 <small id="scada_element_id" style="color: #888; font-family: 'Consolas', monospace; margin-top: 2px; font-size: 0.85em;"></small>
@@ -73,11 +73,60 @@ export class ScadaUI {
     this.container = div
 
     div.querySelector('#scada_close').onclick = () => this.hide()
+    this.makeDraggable(div, div.querySelector('#scada_header'))
+    window.addEventListener('resize', () => this.keepInView())
+  }
+
+  /**
+   * Moves the panel by dragging its header. Once moved, the panel is placed
+   * by left/top (fixed to the window) and stays where it was left when it is
+   * hidden and shown again.
+   */
+  makeDraggable (panel, handle) {
+    let drag = null
+    handle.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 || e.target.closest('button')) return
+      const r = panel.getBoundingClientRect()
+      drag = { id: e.pointerId, dx: e.clientX - r.left, dy: e.clientY - r.top }
+      handle.setPointerCapture(e.pointerId)
+      e.preventDefault()
+    })
+    handle.addEventListener('pointermove', (e) => {
+      if (!drag || e.pointerId !== drag.id) return
+      this.moveTo(e.clientX - drag.dx, e.clientY - drag.dy)
+    })
+    const end = (e) => {
+      if (!drag || e.pointerId !== drag.id) return
+      drag = null
+      handle.releasePointerCapture(e.pointerId)
+    }
+    handle.addEventListener('pointerup', end)
+    handle.addEventListener('pointercancel', end)
+  }
+
+  // keeps the header reachable: at least 40px of the panel inside the window
+  moveTo (x, y) {
+    const panel = this.container
+    const w = panel.offsetWidth
+    const minVisible = 40
+    x = Math.min(Math.max(x, minVisible - w), window.innerWidth - minVisible)
+    y = Math.min(Math.max(y, 0), window.innerHeight - minVisible)
+    panel.style.position = 'fixed'
+    panel.style.right = 'auto'
+    panel.style.left = `${x}px`
+    panel.style.top = `${y}px`
+  }
+
+  keepInView () {
+    const panel = this.container
+    if (!panel || panel.style.display === 'none' || panel.style.right !== 'auto') return
+    this.moveTo(panel.offsetLeft, panel.offsetTop)
   }
 
   show () {
     if (!this.container) this.init()
     this.container.style.display = 'block'
+    this.keepInView()
     this.updateFromSelection()
   }
 
