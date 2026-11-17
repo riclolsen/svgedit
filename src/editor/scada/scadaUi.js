@@ -410,7 +410,8 @@ export class ScadaUI {
               addBtn.textContent = '+ Add Rule'
               addBtn.style.fontSize = '0.8em'
               addBtn.onclick = () => {
-                if (!anim[field.name]) anim[field.name] = []
+                // the rows of a new list go to the animation itself
+                if (!anim[field.name]) anim[field.name] = items
 
                 if (field.itemType === 'string') {
                   items.push('')

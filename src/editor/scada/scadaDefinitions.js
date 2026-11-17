@@ -77,7 +77,7 @@ export const scadaDefinitions = {
         separator: '=',
         itemFields: [
           { name: 'var', label: 'Variable', type: 'text' },
-          { name: 'val', label: 'Value', type: 'text' }
+          { name: 'val', label: 'Value', type: 'tag' }
         ]
       }
     ]
