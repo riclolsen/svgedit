@@ -7,7 +7,7 @@ export const scadaDefinitions = {
   get: {
     label: 'Get',
     fields: [
-      { name: 'tag', type: 'text', label: 'Tag', default: '' },
+      { name: 'tag', type: 'tag', label: 'Tag', default: '' },
       { name: 'align', type: 'select', label: 'Align', options: ['Left', 'Center', 'Right'], default: 'Left' },
       { name: 'type', type: 'select', label: 'Type', options: ['Data', 'Good', 'Bad'], default: 'Data' } // 'type' usage inferred from example
       // format is often embedded in the text content itself for 'get' (printf) or 'boolean' conventions
@@ -23,7 +23,7 @@ export const scadaDefinitions = {
         label: 'Rules',
         default: [],
         itemFields: [
-          { name: 'tag', type: 'text', label: 'Tag' },
+          { name: 'tag', type: 'tag', label: 'Tag' },
           { name: 'data', type: 'text', label: 'Limit' },
           { name: 'param', type: 'color', label: 'Color Name/Code' }
         ]
@@ -33,7 +33,7 @@ export const scadaDefinitions = {
   set: {
     label: 'Set',
     fields: [
-      { name: 'tag', type: 'text', label: 'Tag', default: '' },
+      { name: 'tag', type: 'tag', label: 'Tag', default: '' },
       { name: 'src', type: 'text', label: 'Source', default: '' },
       { name: 'prompt', type: 'text', label: 'Prompt', default: '' },
       { name: 'type', type: 'select', label: 'Type', options: ['Data', 'Variable'], default: 'Data' },
@@ -44,7 +44,7 @@ export const scadaDefinitions = {
   bar: {
     label: 'Bar',
     fields: [
-      { name: 'tag', type: 'text', label: 'Tag' },
+      { name: 'tag', type: 'tag', label: 'Tag' },
       { name: 'min', type: 'number', label: 'Min' },
       { name: 'max', type: 'number', label: 'Max' }
     ]
@@ -52,7 +52,7 @@ export const scadaDefinitions = {
   opac: {
     label: 'Opacity',
     fields: [
-      { name: 'tag', type: 'text', label: 'Tag', default: '' },
+      { name: 'tag', type: 'tag', label: 'Tag', default: '' },
       { name: 'min', type: 'number', label: 'Min', default: 0 },
       { name: 'max', type: 'number', label: 'Max', default: 1 }
     ]
@@ -102,7 +102,7 @@ export const scadaDefinitions = {
   rotate: {
     label: 'Rotate',
     fields: [
-      { name: 'tag', type: 'text', label: 'Tag', default: '' },
+      { name: 'tag', type: 'tag', label: 'Tag', default: '' },
       { name: 'min', type: 'number', label: 'Min', default: 0 },
       { name: 'max', type: 'number', label: 'Max', default: 100 }
     ]
@@ -125,7 +125,7 @@ export const scadaDefinitions = {
   slider: {
     label: 'Slider',
     fields: [
-      { name: 'tag', type: 'text', label: 'Tag', default: '' },
+      { name: 'tag', type: 'tag', label: 'Tag', default: '' },
       { name: 'min', type: 'number', label: 'Min', default: 0 },
       { name: 'max', type: 'number', label: 'Max', default: 100 },
       { name: 'readonly', type: 'checkbox', label: 'Read Only', default: 1 }
@@ -134,14 +134,14 @@ export const scadaDefinitions = {
   zoom: {
     label: 'Zoom',
     fields: [
-      { name: 'tag', type: 'text', label: 'Tag', default: '' },
+      { name: 'tag', type: 'tag', label: 'Tag', default: '' },
       { name: 'align', type: 'select', label: 'Align', options: ['Left', 'Center', 'Right'], default: 'Center' }
     ]
   },
   text: {
     label: 'Text',
     fields: [
-      { name: 'tag', type: 'text', label: 'Tag', default: '' },
+      { name: 'tag', type: 'tag', label: 'Tag', default: '' },
       {
         name: 'map',
         type: 'list',

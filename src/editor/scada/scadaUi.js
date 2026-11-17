@@ -1,5 +1,6 @@
 import { scadaDefinitions } from './scadaDefinitions.js'
 import { parseXSAC, serializeXSAC } from './xsacParser.js'
+import { makeTagField } from './tagBrowser.js'
 
 export class ScadaUI {
   constructor (editor) {
@@ -388,7 +389,7 @@ export class ScadaUI {
                       this.save()
                     }
                   }
-                  iWrapper.appendChild(iInput)
+                  iWrapper.appendChild(ifield.type === 'tag' ? makeTagField(iInput) : iInput)
                   itemRow.appendChild(iWrapper)
                 })
 
@@ -489,7 +490,7 @@ export class ScadaUI {
           }
 
           row.appendChild(label)
-          row.appendChild(input)
+          row.appendChild(field.type === 'tag' ? makeTagField(input) : input)
           wrapper.appendChild(row)
         })
       } else {
